@@ -1,0 +1,14 @@
+{
+    "python.analysis.extraPaths": [
+        "./src"
+    ],
+    "python.autoComplete.extraPaths": [
+        "./src"
+    ],
+    "python.envFile": "${workspaceFolder}/.env",
+    "files.exclude": {
+        "**/__pycache__/": true,
+        "**/__init__.py": true,
+        "**/*.pyc": true
+    }
+}
