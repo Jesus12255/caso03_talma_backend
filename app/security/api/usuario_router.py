@@ -3,7 +3,7 @@ from app.security.dependencies.dependencies_usuario import get_usuario_facade
 from app.security.facade.usuario_facade import UsuarioFacade
 from dto.collection_response import CollectionResponse
 from dto.universal_dto import BaseOperacionResponse
-from dto.usuario_dtos import UsuarioComboResponse, UsuarioFiltroRequest, UsuarioRequest, UsuarioResponse, UsuarioFiltroResponse
+from dto.usuario_dtos import UsuarioComboResponse, UsuarioFiltroRequest, UsuarioRequest, UsuarioResponse, UsuarioFiltroResponse, UsuarioStatusRequest
 from app.auth.dependencies.dependencies_auth import get_current_user
 
 router = APIRouter()
@@ -30,3 +30,8 @@ async def get_usuario(usuarioId: str, usuario_facade: UsuarioFacade = Depends(ge
 @router.post("/find", response_model=CollectionResponse[UsuarioFiltroResponse])
 async def find(request: UsuarioFiltroRequest, usuario_facade: UsuarioFacade = Depends(get_usuario_facade), current_user: str = Depends(get_current_user)) -> CollectionResponse[UsuarioFiltroResponse]:
     return await usuario_facade.find(request)
+
+
+@router.post("/changeStatus", response_model=BaseOperacionResponse)
+async def changeStatus(request: UsuarioStatusRequest, usuario_facade: UsuarioFacade = Depends(get_usuario_facade), current_user: str = Depends(get_current_user)) -> BaseOperacionResponse:
+    return await usuario_facade.changeStatus(request)

@@ -3,7 +3,7 @@ from app.security.repository.usuario_repository import UsuarioRepository
 from app.security.service.usuario_service import UsuarioService
 from config.mapper import Mapper
 from dto.universal_dto import BaseOperacionResponse
-from dto.usuario_dtos import UsuarioRequest, UsuarioFiltroRequest, UsuarioFiltroResponse
+from dto.usuario_dtos import UsuarioRequest, UsuarioFiltroRequest, UsuarioFiltroResponse, UsuarioStatusRequest
 from dto.collection_response import CollectionResponse
 from utl.generic_util import GenericUtil
 from config.config import settings
@@ -64,6 +64,13 @@ class UsuarioServiceImpl(UsuarioService):
                 print(f"DEBUG: Email task scheduled for {usuario.correo}")
             
 
+
+            
+    async def changeStatus(self, t: UsuarioStatusRequest) -> None:
+        usuario = await self.usuario_repository.get(t.usuarioId)
+        if usuario:
+            usuario.habilitado = t.habilitado
+            await self.usuario_repository.save(usuario)
 
     async def get(self, usuarioId: str) -> Usuario:
         return await self.usuario_repository.get(usuarioId)

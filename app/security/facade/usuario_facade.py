@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from dto.collection_response import CollectionResponse
 from dto.universal_dto import BaseOperacionResponse
-from dto.usuario_dtos import UsuarioComboResponse, UsuarioFiltroRequest, UsuarioRequest, UsuarioResponse, UsuarioFiltroResponse
+from dto.usuario_dtos import UsuarioComboResponse, UsuarioFiltroRequest, UsuarioRequest, UsuarioResponse, UsuarioFiltroResponse, UsuarioStatusRequest
 
 
 class UsuarioFacade(ABC):
@@ -21,6 +21,10 @@ class UsuarioFacade(ABC):
 
     @abstractmethod
     async def init(self) -> UsuarioComboResponse:
+        pass
+
+    @abstractmethod
+    async def changeStatus(self, t: UsuarioStatusRequest) -> BaseOperacionResponse:
         pass
 
     @abstractmethod

@@ -56,6 +56,9 @@ class UsuarioRepositoryImpl(BaseRepositoryImpl[Usuario], UsuarioRepository):
             if request.fechaInicio and request.fechaFin:
                  query = query.filter(VwUsuario.fecha_consulta.between(request.fechaInicio, request.fechaFin))
             
+            if request.habilitado is not None:
+                query = query.filter(VwUsuario.habilitado == request.habilitado)
+            
             # New Quick Search Filter (palabraClave)
             if request.palabraClave:
                 search_term = f"%{request.palabraClave}%"
