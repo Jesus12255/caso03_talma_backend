@@ -17,6 +17,13 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    # SMTP Configuration
+    # SMTP Configuration (Renamed to avoid .env conflict)
+    MAIL_HOST: str = "smtp.mailersend.net"
+    MAIL_PORT: int = 2525
+    MAIL_USER: str = "MS_8CwHfS@test-zxk54v8nw61ljy6v.mlsender.net"
+    MAIL_PASSWORD: str = "mssp.0ZklBbf.3vz9dledrx64kj50.psuBIBS"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_ignore_empty=True,
