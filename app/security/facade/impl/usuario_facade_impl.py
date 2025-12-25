@@ -4,7 +4,7 @@ from app.security.facade.usuario_facade import UsuarioFacade
 from app.security.service.usuario_service import UsuarioService
 from config.mapper import Mapper
 from dto.universal_dto import BaseOperacionResponse, ComboBaseResponse
-from dto.usuario_dtos import UsuarioComboResponse, UsuarioRequest, UsuarioResponse, UsuarioFiltroRequest, UsuarioFiltroResponse
+from dto.usuario_dtos import UsuarioComboResponse, UsuarioRequest, UsuarioResponse, UsuarioFiltroRequest, UsuarioFiltroResponse, UsuarioStatusRequest
 from dto.collection_response import CollectionResponse
 from utl.generic_util import Constantes
 
@@ -33,6 +33,9 @@ class UsuarioFacadeImpl(UsuarioFacade):
     async def find(self, request: UsuarioFiltroRequest) -> CollectionResponse[UsuarioFiltroResponse]:
         return await self.usuario_service.find(request)
     
+    async def changeStatus(self, t: UsuarioStatusRequest) -> BaseOperacionResponse:
+        await self.usuario_service.changeStatus(t)
+        return BaseOperacionResponse(codigo="200", mensaje="Estado actualizado correctamente")
 
     async def init(self) -> UsuarioComboResponse:
         comboResponse = UsuarioComboResponse()

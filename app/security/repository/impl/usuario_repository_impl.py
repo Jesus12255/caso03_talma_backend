@@ -46,6 +46,7 @@ class UsuarioRepositoryImpl(BaseRepositoryImpl[Usuario], UsuarioRepository):
         try:
             query = select(VwUsuario)
             
+            # Existing filters
             if request.nombre:
                 query = query.filter(VwUsuario.nombre_completo.ilike(f"%{request.nombre}%"))
             
@@ -55,6 +56,20 @@ class UsuarioRepositoryImpl(BaseRepositoryImpl[Usuario], UsuarioRepository):
             if request.fechaInicio and request.fechaFin:
                  query = query.filter(VwUsuario.fecha_consulta.between(request.fechaInicio, request.fechaFin))
             
+            if request.habilitado is not None:
+                query = query.filter(VwUsuario.habilitado == request.habilitado)
+            
+            # New Quick Search Filter (palabraClave)
+            if request.palabraClave:
+                search_term = f"%{request.palabraClave}%"
+                from sqlalchemy import or_
+                query = query.filter(
+                    or_(
+                        VwUsuario.nombre_completo.ilike(search_term),
+                        VwUsuario.correo.ilike(search_term),
+                        VwUsuario.documento.ilike(search_term)
+                    )
+                )
       
             count_query = select(func.count()).select_from(query.subquery())
             total_count = await self.db.execute(count_query)

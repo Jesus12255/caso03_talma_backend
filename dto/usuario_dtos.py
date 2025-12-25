@@ -57,6 +57,10 @@ class UsuarioFiltroResponse(BaseModel):
     creado: Optional[str] = None
 
 
+class UsuarioStatusRequest(BaseModel):
+    usuarioId: str
+    habilitado: bool
+
 class UsuarioFiltroRequest(BaseRequest):
     model_config = ConfigDict(from_attributes=True)
 
@@ -64,3 +68,5 @@ class UsuarioFiltroRequest(BaseRequest):
     rolCodigo: Optional[str] = None
     fechaInicio: Optional[str] = None
     fechaFin: Optional[str] = None
+    palabraClave: Optional[str] = None
+    habilitado: Optional[bool] = None
