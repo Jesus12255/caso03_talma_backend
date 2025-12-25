@@ -64,3 +64,4 @@ class UsuarioFiltroRequest(BaseRequest):
     rolCodigo: Optional[str] = None
     fechaInicio: Optional[str] = None
     fechaFin: Optional[str] = None
+    palabraClave: Optional[str] = None
