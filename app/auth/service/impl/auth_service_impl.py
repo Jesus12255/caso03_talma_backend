@@ -41,6 +41,9 @@ class AuthServiceImpl(AuthService):
         if not user_orm:
              raise AppBaseException("Incorrect email or password", status_code=status.HTTP_400_BAD_REQUEST)
         
+        if not user_orm.habilitado:
+            raise AppBaseException("El usuario se encuentra inhabilitado. Por favor, contacte al administrador.", status_code=status.HTTP_403_FORBIDDEN)
+        
         stored_hash = user_orm.password
 
         # Security check
