@@ -1,3 +1,56 @@
+class Constantes:
+    BLANK_SPACE = " "
+    GUION = "-"
+    SLASH = "/"
+
+    UUID_NULL = None
+    TRUE = "true"
+    HABILITADO = True
+    INHABILITADO = False
+    CERO = "0"
+
+    PAGINATION_START = 0
+    PAGINATION_SIZE = 20
+
+    MAXIMO_CARGA_INSPECCIONES = 200
+    MINIMO_IMAGEN_SEGUIMIENTO = 1
+
+    EMPTY = ""
+    CSC = "CSC-PERU"
+    SUCCESS = "success"
+
+    SCHEMA = "public"
+    CATALOG = "sigma_db"
+
+    SI = True
+    NO = False
+
+    FILE_NAME_BLOB = "blob"
+
+    MAX_CANT_OBSERVACIONES = 3
+    LONGUITUD_CODIGO_CATALOGO = 3
+
+    ACCESS = "ACCESS"
+
+    SMS_INICIO = 100000
+    SMS_FIN = 999999
+
+    TDC_SOLICITUD = "VARIOS"
+
+    NUMERO_SIN_MEDIDOR = 0
+
+    SI_TXT = "SI"
+    NO_TXT = "NO"
+    NA_TXT = "NO APLICA"
+
+    MAX_FILE_SIZE = 10 * 1024 * 1024
+    MAX_FILE_SIZE_TEXT = "10MB"
+
+    ZONA_CODIGO = "Z"
+    NIVEL_CODIGO = "N"
+
+
+
 class Catalogo:
     VALORES_CONSTANTES = "VALORES_CONSTANTES"
     ESTADO_USUARIO = "ESTADO_USUARIO"

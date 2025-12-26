@@ -12,3 +12,4 @@ sqlalchemy
 psycopg2-binary
 asyncpg
 bcrypt
+python-jose[cryptography]
