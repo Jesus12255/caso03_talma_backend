@@ -1,4 +1,5 @@
-from app.core.domain.document import Base
+
+from app.core.domain.base_model import Base
 from config.app_logging import setup_logging
 from config.router_doc_config import app
 from config.cors_config import setup_cors

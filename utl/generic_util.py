@@ -82,6 +82,12 @@ class GenericUtil:
     @staticmethod
     def CSC_if_string_null(value: str) -> str:
         return value if GenericUtil.is_not_empty(value) else Constantes.CSC
+    
+    @staticmethod
+    def is_empty_list(objeto: Any) -> bool:
+        return isinstance(objeto, list) and GenericUtil.is_empty(objeto)
+    
+ 
 
     # =========================
     # STRINGS

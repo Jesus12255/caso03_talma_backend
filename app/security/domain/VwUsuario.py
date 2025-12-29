@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Boolean, TIMESTAMP, func
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
-from app.core.domain.baseModel import Base
+from app.core.domain.base_model import Base
 
 class VwUsuario(Base):
     __tablename__ = "vw_usuario"

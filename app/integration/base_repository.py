@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar, List, Optional, Any, Union
-from app.core.domain.baseModel import BaseModel
+from app.core.domain.base_model import BaseModel
 
 ModelType = TypeVar("ModelType", bound=BaseModel)
 

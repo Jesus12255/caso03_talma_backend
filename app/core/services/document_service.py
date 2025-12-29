@@ -1,13 +1,17 @@
 from abc import ABC, abstractmethod
 
-from dto.document import DocumentRequest
+from dto.guia_aerea_dtos import  GuiaAereaRequest
 from dto.universal_dto import BaseOperacionResponse
 
 
 class DocumentService(ABC):
 
     @abstractmethod
-    async def save(self, request: DocumentRequest):
+    async def saveOrUpdate(self, request: GuiaAereaRequest):
+        pass
+
+    @abstractmethod
+    async def get(self, documentoId: str):
         pass
 
     @abstractmethod

@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 # Add the project root to sys.path
 sys.path.append(os.getcwd())
 
-from app.core.domain.document import Document
+from app.core.domain.guia_aerea import Document
 from app.core.repository.impl.document_repository_impl import DocumentRepositoryImpl
 from config.database_config import DATABASE_URL
 import uuid

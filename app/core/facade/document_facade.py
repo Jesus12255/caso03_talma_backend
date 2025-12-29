@@ -1,13 +1,14 @@
 from abc import ABC, abstractmethod
 from typing import List
-from dto.document import DocumentRequest
+
+from fastapi import File, Form, UploadFile
 from dto.universal_dto import BaseOperacionResponse
 
 
 class DocumentFacade(ABC):
     
     @abstractmethod
-    async def save(self, request: List[DocumentRequest]) -> BaseOperacionResponse:
+    async def saveOrUpdate(self, files: List[UploadFile] = File(...), requestForm: str = Form(...)) -> BaseOperacionResponse:
         pass
 
     @abstractmethod

@@ -3,6 +3,7 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload
 from app.auth.schema.user import UserCreate, User
 from app.security.domain.Usuario import Usuario
 
@@ -26,7 +27,7 @@ class UserRepository:
 
     # Helper method to get the raw ORM object (including password hash)
     async def get_user_orm_by_identifier(self, db: AsyncSession, identifier: str) -> Optional[Usuario]:
-         result = await db.execute(select(Usuario).where(
+         result = await db.execute(select(Usuario).options(joinedload(Usuario.rol)).where(
             or_(Usuario.correo == identifier, Usuario.usuario == identifier)
         ))
          return result.scalars().first()
