@@ -12,4 +12,20 @@ class DocumentRepositoryImpl(BaseRepositoryImpl[GuiaAerea], DocumentRepository):
     def __init__(self, db: AsyncSession):
         super().__init__(GuiaAerea, db)
 
+    async def find_by_numero(self, numero: str, exclude_id: str = None) -> GuiaAerea | None:
+        query = select(GuiaAerea).where(GuiaAerea.numero == numero)
+        if exclude_id:
+             query = query.where(GuiaAerea.guia_aerea_id != exclude_id)
+        
+        result = await self.db.execute(query)
+        return result.scalars().first()
+
+    async def get_by_id_with_relations(self, id: str) -> GuiaAerea | None:
+        from sqlalchemy.orm import selectinload
+        query = select(GuiaAerea).where(GuiaAerea.guia_aerea_id == id).options(
+            selectinload(GuiaAerea.confianzas_extraccion)
+        )
+        result = await self.db.execute(query)
+        return result.scalars().first()
+
     

@@ -1,6 +1,8 @@
 import json
 import logging
 from typing import List
+from core.tasks.document_tasks import process_document_validations
+from utl.file_util import FileUtil
 
 from fastapi import Form, UploadFile
 from fastapi.params import File
@@ -10,6 +12,8 @@ from core.exceptions import AppBaseException
 from dto.guia_aerea_dtos import GuiaAereaRequest
 from dto.universal_dto import BaseOperacionResponse
 from utl.generic_util import GenericUtil
+import re
+
 
 logger = logging.getLogger(__name__)
 
@@ -18,21 +22,94 @@ class DocumentFacadeImpl(DocumentFacade):
     def __init__(self, document_service: DocumentService):
         self.document_service = document_service
 
+
     async def saveOrUpdate(self, files: List[UploadFile] = File(...), requestForm: str = Form(...)) -> BaseOperacionResponse:
         try:
-            request = json.loads(requestForm)
-            if GenericUtil.is_empty_list(request):
-                raise ValueError("Debe de enviar al menos un documento en el request")
+            await self._validate_files(files)
+            request = self._validate_request(requestForm)
 
             for tt in request:
                 obj_req = GuiaAereaRequest.model_validate(tt)
+                self._validar_campos_requeridos_guia_aerea(obj_req)
                 await self.document_service.saveOrUpdate(obj_req)
-                
-            return BaseOperacionResponse(codigo="200", mensaje="Documentos guardados correctamente")
+                if obj_req.guiaAereaId:
+                    process_document_validations.delay(str(obj_req.guiaAereaId))
+            return BaseOperacionResponse(codigo="200", mensaje="Documentos recibidos. Procesando en segundo plano.")
+        
         except Exception as e:
+            if isinstance(e, AppBaseException):
+                raise e
             logger.error(f"Error al guardar documentos: {e}")
-            raise AppBaseException(message="Error al guardar documentos")
+            raise AppBaseException(message=f"Error al procesar la solicitud: {e}")
 
 
     async def get_all_documents(self, skip: int = 0, limit: int = 10):
         return await self.document_service.get_all_documents(skip, limit)
+    
+
+
+
+    def _validar_campos_requeridos_guia_aerea(self, guia: GuiaAereaRequest):
+
+        errores = []
+
+        if not guia.numero or guia.numero.strip() == "":
+            errores.append("El número de la guía aérea es obligatorio.")
+
+        # Intervinientes
+        if not guia.intervinientes or len(guia.intervinientes) != 2:
+            errores.append("Debe incluir remitente y consignatario.")
+        else:
+            remitente = guia.intervinientes[0]
+            consignatario = guia.intervinientes[1]
+
+            if not remitente.nombre or not remitente.direccion:
+                errores.append("Falta información del remitente.")
+
+            if not consignatario.nombre or not consignatario.direccion:
+                errores.append("Falta información del consignatario.")
+
+        if not guia.origenCodigo:
+            errores.append("El aeropuerto de origen es obligatorio.")
+
+        if not guia.destinoCodigo:
+            errores.append("El aeropuerto de destino es obligatorio.")
+
+        if guia.cantidadPiezas is None or guia.cantidadPiezas < 1:
+            errores.append("La cantidad de piezas debe ser mayor a cero.")
+
+        if not guia.descripcionMercancia:
+            errores.append("La descripción de la mercadería es obligatoria.")
+
+        if guia.pesoBruto is None or guia.pesoBruto <= 0:
+            errores.append("El peso bruto debe ser mayor a cero.")
+
+        if not guia.tipoFleteCodigo:
+            errores.append("El tipo de flete es obligatorio.")
+
+        if not guia.monedaCodigo:
+            errores.append("La moneda es obligatoria.")
+
+        if guia.fechaEmision is None:
+            errores.append("La fecha de emisión de la guía es obligatoria.")
+
+        if errores:
+            raise AppBaseException(message=" ".join(errores))
+
+    def _validate_request(self, requestForm: str = Form(...)) -> List[GuiaAereaRequest]:
+        try:
+            request = json.loads(requestForm)
+        except json.JSONDecodeError:
+            raise AppBaseException(message="El formato del JSON no es válido")
+            
+        if GenericUtil.is_empty_list(request):
+            raise AppBaseException(message="Debe de enviar al menos un documento en el request")
+
+        return request
+
+    async def _validate_files(self, files: List[UploadFile]):
+        for file in files:
+            await FileUtil.validate_file(file)
+
+
+        

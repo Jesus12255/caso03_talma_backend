@@ -13,49 +13,54 @@ class DatoRequest(BaseModel):
     label: str
     value: str
     
-
 class GuiaAereaRequest(BaseModel):
-    
+
     model_config = ConfigDict(from_attributes=True)
 
     guiaAereaId: Optional[UUID] = None
-    intervinientes: List[IntervinienteRequest] = Field(
-        ...,
-        length=2,
+
+    intervinientes: Optional[List[IntervinienteRequest]] = Field(
+        default=None,
         description="Debe incluir remitente y consignatario"
     )
-    numero: str = Field(..., max_length=20)
-    tipoCodigo: str = Field(..., max_length=40)
-    fechaEmision: datetime
-    estadoGuiaCodigo: str = Field(..., max_length=40)
-    origenCodigo: str = Field(..., max_length=40)
-    destinoCodigo: str = Field(..., max_length=40)
-    transbordo: Optional[str] = Field(None, max_length=200)
-    aerolineaCodigo: Optional[str] = Field(None, max_length=40)
-    numeroVuelo: Optional[str] = Field(None, max_length=50)
+
+    numero: Optional[str] = Field(default=None, max_length=20)
+    tipoCodigo: Optional[str] = Field(default=None, max_length=40)
+    fechaEmision: Optional[datetime] = None
+    estadoGuiaCodigo: Optional[str] = Field(default=None, max_length=40)
+    origenCodigo: Optional[str] = Field(default=None, max_length=40)
+    destinoCodigo: Optional[str] = Field(default=None, max_length=40)
+
+    transbordo: Optional[str] = Field(default=None, max_length=200)
+    aerolineaCodigo: Optional[str] = Field(default=None, max_length=40)
+    numeroVuelo: Optional[str] = Field(default=None, max_length=50)
     fechaVuelo: Optional[datetime] = None
+
     descripcionMercancia: Optional[str] = None
-    cantidadPiezas: int = Field(..., gt=0)
+    cantidadPiezas: Optional[int] = Field(default=None, gt=0)
+
     pesoBruto: Optional[Decimal] = None
     pesoCobrado: Optional[Decimal] = None
-    unidadPesoCodigo: Optional[str] = Field(None, max_length=40)
+    unidadPesoCodigo: Optional[str] = Field(default=None, max_length=40)
     volumen: Optional[Decimal] = None
-    naturalezaCargaCodigo: Optional[str] = Field(None, max_length=40)
+
+    naturalezaCargaCodigo: Optional[str] = Field(default=None, max_length=40)
     valorDeclarado: Optional[Decimal] = None
-    tipoFleteCodigo: Optional[str] = Field(None, max_length=40)
+    tipoFleteCodigo: Optional[str] = Field(default=None, max_length=40)
     tarifaFlete: Optional[Decimal] = None
     otrosCargos: Optional[Decimal] = None
-    monedaCodigo: str = Field(..., max_length=40)
-    totalFlete: Decimal
+
+    monedaCodigo: Optional[str] = Field(default=None, max_length=40)
+    totalFlete: Optional[Decimal] = None
+
     instruccionesEspeciales: Optional[str] = None
     observaciones: Optional[str] = None
-    estadoRegistroCodigo: str = Field(..., max_length=40)
-    confianzas: List[GuiaAereaConfianzaRequest] = Field(
-        ...,
-        length=42,
+    estadoRegistroCodigo: Optional[str] = Field(default=None, max_length=40)
+
+    confianzas: Optional[List[GuiaAereaConfianzaRequest]] = Field(
+        default=None,
         description="Cada campo debe tener su nivel de confianza correspondiente"
     )
-    
 
 class DocumentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)

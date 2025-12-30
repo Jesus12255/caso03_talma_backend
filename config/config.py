@@ -6,16 +6,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "FastAPI Enterprise Backend"
     API_V1_STR: str = "/api/v1"
     BACKEND_CORS_ORIGINS: List[str] = [
-        "https://tuticket.vip",
-        "https://www.tuticket.vip",
-        "https://webapi.tuticket.lat",
-        "https://portalapi.tuticket.lat",
-        "https://tuticket.lat",
-        "https://api.payzen.lat",
-        "https://static.payzen.lat",
-        "https://payzen.io/",
-        "http://localhost:8080",
-        "https://secure.payzen.lat"
+        "http://localhost:5173"
     ]
     LOG_LEVEL: str = "INFO"
 
@@ -23,6 +14,7 @@ class Settings(BaseSettings):
     LLM_BASE_URL: str
     LLM_MODEL_NAME: str 
     DATABASE_URL: str
+    REDIS_URL: str = "redis://localhost:6379/0"
     PASWORD_INICIAL: str
     
     

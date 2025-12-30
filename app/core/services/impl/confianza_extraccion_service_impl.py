@@ -13,11 +13,25 @@ class ConfianzaExtraccionServiceImpl(ConfianzaExtraccionService, ServiceBase):
         self.confianza_extraccion_repository = confianza_extraccion_repository
 
     async def save(self, request: GuiaAereaRequest):
+      
+        remitente_id = request.intervinientes[0].intervinienteId
+        consignatario_id = request.intervinientes[1].intervinienteId
+        guia_id = request.guiaAereaId
+
+        confianzas_to_save = []
         for confianza_dto in request.confianzas:
             confianza = Mapper.to_entity(confianza_dto, ConfianzaExtraccion)
-            if confianza.guia_aerea_id :
-                confianza.guia_aerea_id = request.guiaAereaId
-            
+            campo = confianza.nombre_campo
+            if campo.startswith("remitente."):
+                confianza.interviniente_id = remitente_id
+            elif campo.startswith("consignatario."):
+                confianza.interviniente_id = consignatario_id
+            else:
+                 confianza.guia_aerea_id = guia_id
+
             confianza.creado = DateUtil.get_current_local_datetime()
             confianza.creado_por = self.session.full_name
-            await self.confianza_extraccion_repository.save(confianza)
+            confianzas_to_save.append(confianza)
+        
+        if confianzas_to_save:
+            await self.confianza_extraccion_repository.save_all(confianzas_to_save)

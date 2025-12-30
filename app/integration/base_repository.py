@@ -19,6 +19,10 @@ class BaseRepository(ABC, Generic[ModelType]):
         pass
 
     @abstractmethod
+    async def save_all(self, objs: List[ModelType]) -> List[ModelType]:
+        pass
+
+    @abstractmethod
     async def update(self, id: Any, obj_in: Union[dict, ModelType]) -> Optional[ModelType]:
         pass
 

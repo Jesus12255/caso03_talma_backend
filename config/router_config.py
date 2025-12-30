@@ -12,6 +12,9 @@ def setup_routes(app: FastAPI):
     app.include_router(analyze_router.router, prefix="/analyze", tags=["Analyze"], dependencies=[Depends(get_current_user)])
     app.include_router(document_router.router, prefix="/document", tags=["Document"], dependencies=[Depends(get_current_user)])
     app.include_router(usuario_router.router, prefix="/usuario", tags=["Usuario"], dependencies=[Depends(get_current_user)])
+    
+    from core.realtime import websocket
+    app.include_router(websocket.router, prefix="/documents", tags=["WebSockets"])
     setup_exception_handlers(app)
     
     @app.get("/")

@@ -18,6 +18,11 @@ async def init_models():
 @app.on_event("startup")
 async def on_startup():
     await init_models()
+    
+    # Iniciar listener de Redis para WebSockets
+    import asyncio
+    from core.realtime.websocket import redis_connector
+    asyncio.create_task(redis_connector())
 
 if __name__ == "__main__":
     import uvicorn
