@@ -30,7 +30,7 @@ class GuiaAerea(BaseModel):
         nullable=False
     )
 
-    numero = Column(String(20), nullable=False, unique=True)
+    numero = Column(String(20), nullable=False)
     tipo_codigo = Column(String(40), nullable=False)
     fecha_emision = Column(TIMESTAMP(timezone=True), nullable=False)
     estado_guia_codigo = Column(String(40), nullable=False)
