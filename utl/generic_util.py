@@ -1,5 +1,6 @@
 from typing import Any, Collection, Dict, Callable, TypeVar
 from datetime import datetime
+from utl.date_util import DateUtil
 import random
 import base64
 from threading import Lock
@@ -15,16 +16,6 @@ class Constantes:
     ROL = "ROL"
 
 
-class DateUtil:
-    FORMAT02 = "%Y%m%d%H%M%S"
-
-    @staticmethod
-    def get_current_local_datetime():
-        return datetime.now()
-
-    @staticmethod
-    def format(date: datetime, pattern: str) -> str:
-        return date.strftime(pattern)
 
 
 class GenericUtil:

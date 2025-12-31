@@ -32,7 +32,7 @@ class GuiaAerea(BaseModel):
 
     numero = Column(String(20), nullable=False)
     tipo_codigo = Column(String(40), nullable=False)
-    fecha_emision = Column(TIMESTAMP(timezone=True), nullable=False)
+    fecha_emision = Column(TIMESTAMP(timezone=False), nullable=False)
     estado_guia_codigo = Column(String(40), nullable=False)
 
     origen_codigo = Column(String(40), nullable=False)
@@ -41,7 +41,7 @@ class GuiaAerea(BaseModel):
 
     aerolinea_codigo = Column(String(40), nullable=True)
     numero_vuelo = Column(String(50), nullable=True)
-    fecha_vuelo = Column(TIMESTAMP(timezone=True), nullable=True)
+    fecha_vuelo = Column(TIMESTAMP(timezone=False), nullable=True)
 
     descripcion_mercancia = Column(Text, nullable=True)
     cantidad_piezas = Column(Integer, nullable=False)

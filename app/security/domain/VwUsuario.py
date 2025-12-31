@@ -15,7 +15,7 @@ class VwUsuario(Base):
     correo = Column(String, nullable=True)
     celular = Column(String, nullable=True)
     token = Column(String, nullable=True)
-    fecha_expiracion_token = Column(TIMESTAMP(timezone=True), nullable=True)
+    fecha_expiracion_token = Column(TIMESTAMP(timezone=False), nullable=True)
     fecha_consulta = Column(String, nullable=True)
     tipo_documento_codigo = Column(String, nullable=True)
     tipo_documento = Column(String, nullable=True)

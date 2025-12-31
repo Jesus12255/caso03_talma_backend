@@ -65,7 +65,7 @@ class GuiaAereaRequest(BaseModel):
         description="Cada campo debe tener su nivel de confianza correspondiente"
     )
 
-class DocumentResponse(BaseModel):
+class GuiaAereaResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
     documentoId: Optional[str] = None

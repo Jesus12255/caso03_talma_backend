@@ -37,6 +37,8 @@ class UsuarioServiceImpl(UsuarioService, FacadeBase):
             usuario.documento = t.documento
             usuario.correo = t.correo
             usuario.celular = t.celular
+            usuario.modificado = DateUtil.get_current_local_datetime()
+            usuario.modificado_por = self.session.full_name
             await self.usuario_repository.save(usuario)
 
         else:
@@ -47,6 +49,9 @@ class UsuarioServiceImpl(UsuarioService, FacadeBase):
             # Capture the raw password to send via email
             raw_password = settings.PASWORD_INICIAL
             usuario.password = SecurityUtil.get_password_hash(raw_password) 
+            
+            usuario.creado = DateUtil.get_current_local_datetime()
+            usuario.creado_por = self.session.full_name
             
             await self.usuario_repository.save(usuario)
             print("DEBUG: User saved to DB. Scheduling email task...") # Debug logic

@@ -1,6 +1,7 @@
 import json
 import logging
 from typing import List, Any
+from uuid import UUID
 from config.mapper import Mapper
 from core.tasks.document_tasks import process_document_validations
 from utl.file_util import FileUtil
@@ -59,7 +60,9 @@ class DocumentFacadeImpl(DocumentFacade):
             limit=request.limit
         )
 
-    
+    async def reprocess(self, document_id: UUID) -> BaseOperacionResponse:
+        process_document_validations.delay(str(document_id))
+        return BaseOperacionResponse(codigo="200", mensaje="Reprocesando en segundo plano.")
 
     def _validar_campos_requeridos_guia_aerea(self, guia: GuiaAereaRequest):
 

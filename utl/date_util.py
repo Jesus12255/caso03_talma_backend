@@ -56,7 +56,7 @@ class DateUtil:
 
     @staticmethod
     def get_current_local_datetime() -> datetime:
-        return datetime.now(TIME_ZONE)
+        return datetime.now(TIME_ZONE).replace(tzinfo=None)
 
     @staticmethod
     def get_current_year() -> int:
