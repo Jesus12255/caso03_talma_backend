@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     LLM_BASE_URL: str
     LLM_MODEL_NAME: str 
     DATABASE_URL: str
-    REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_URL: str
     PASWORD_INICIAL: str
     
     
