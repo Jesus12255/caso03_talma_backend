@@ -67,11 +67,23 @@ class GuiaAerea(BaseModel):
     estado_registro_codigo = Column(String(40), nullable=False)
 
     confidence_total = Column(Numeric(5, 2), nullable=True)
-    estado_confianza  = Column(String(40), nullable=False)
+    estado_confianza_codigo  = Column(String(40), nullable=False)
 
 
     confianzas_extraccion = relationship(
         "ConfianzaExtraccion",
         back_populates="guia_aerea",
         cascade="all, delete-orphan"
+    )
+
+    interviniente_remitente = relationship(
+        "Interviniente",
+        foreign_keys=[remitente_id],
+        lazy="select"
+    )
+
+    interviniente_consignatario = relationship(
+        "Interviniente",
+        foreign_keys=[consignatario_id],
+        lazy="select"
     )

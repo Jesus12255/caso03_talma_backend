@@ -23,12 +23,17 @@ async def _process_validations_async(guia_aerea_id: str):
     async with AsyncSessionLocal() as db:
         try:
 
+            from app.core.repository.impl.guia_aerea_filtro_repository_impl import GuiaAereaFiltroRepositoryImpl
+            
             doc_repo = DocumentRepositoryImpl(db)
+            filtro_repo = GuiaAereaFiltroRepositoryImpl(db)
             int_repo = IntervinienteRepositoryImpl(db)
             conf_repo = ConfianzaExtraccionRepositoryImpl(db)
+            
             int_service = IntervinienteServiceImpl(int_repo)
             conf_service = ConfianzaExtraccionServiceImpl(conf_repo)
-            doc_service = DocumentServiceImpl(doc_repo, int_service, conf_service)
+            
+            doc_service = DocumentServiceImpl(doc_repo, filtro_repo, int_service, conf_service)
             
             doc = await doc_service.get_with_relations(guia_aerea_id)     
             await doc_service.apply_business_rules(doc)

@@ -1,9 +1,10 @@
 from typing import List
 from fastapi import APIRouter, Depends, File, Form, UploadFile
-
+from fastapi.responses import StreamingResponse
 from app.core.dependencies.dependencies_documento import get_document_facade
 from app.core.facade.document_facade import DocumentFacade
-from dto.guia_aerea_dtos import  DocumentResponse
+from dto.guia_aerea_dtos import GuiaAereaDataGridResponse, GuiaAereaFiltroRequest
+from dto.collection_response import CollectionResponse
 from dto.universal_dto import BaseOperacionResponse
 
 router = APIRouter()
@@ -13,8 +14,7 @@ async def saveOrUpdate(files: List[UploadFile] = File(...), requestForm: str = F
     return await document_facade.saveOrUpdate(files, requestForm)
 
 
+@router.post("/find", response_model=CollectionResponse[GuiaAereaDataGridResponse])
+async def find(request: GuiaAereaFiltroRequest, document_facade: DocumentFacade = Depends(get_document_facade)):
+    return await document_facade.find(request)
 
-
-@router.get("/", response_model=List[DocumentResponse])
-async def get_documents(skip: int = 0, limit: int = 10, document_facade: DocumentFacade = Depends(get_document_facade)):
-    return await document_facade.get_all_documents(skip, limit)

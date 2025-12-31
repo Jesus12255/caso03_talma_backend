@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
+from typing import List, Any
 
-from dto.guia_aerea_dtos import  GuiaAereaRequest
-from dto.universal_dto import BaseOperacionResponse
+from app.core.domain.guia_aerea_data_grid import GuiaAereaDataGrid
+from dto.guia_aerea_dtos import  GuiaAereaFiltroRequest, GuiaAereaRequest
 
 
 class DocumentService(ABC):
@@ -15,5 +16,5 @@ class DocumentService(ABC):
         pass
 
     @abstractmethod
-    async def get_all_documents(self, skip: int = 0, limit: int = 10):
+    async def find(self, request: GuiaAereaFiltroRequest) -> tuple[Any, int]:
         pass

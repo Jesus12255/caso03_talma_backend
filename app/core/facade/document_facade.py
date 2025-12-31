@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List
-
+from typing import List, Any
 from fastapi import File, Form, UploadFile
+from dto.guia_aerea_dtos import GuiaAereaComboResponse,  GuiaAereaFiltroRequest
 from dto.universal_dto import BaseOperacionResponse
 
 
@@ -12,5 +12,9 @@ class DocumentFacade(ABC):
         pass
 
     @abstractmethod
-    async def get_all_documents(self, skip: int = 0, limit: int = 10):
+    async def find(self, request: GuiaAereaFiltroRequest) -> Any:
+        pass
+
+    @abstractmethod
+    async def init(self) -> GuiaAereaComboResponse:
         pass

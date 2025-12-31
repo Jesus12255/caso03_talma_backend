@@ -1,15 +1,20 @@
 import json
 import logging
-from typing import List
+from typing import List, Any
+from config.mapper import Mapper
 from core.tasks.document_tasks import process_document_validations
 from utl.file_util import FileUtil
+from utl.transactional_session import TransactionalSession
+
+from app.core.services.impl.document_service_impl import DocumentServiceImpl
 
 from fastapi import Form, UploadFile
 from fastapi.params import File
 from app.core.facade.document_facade import DocumentFacade
 from app.core.services.document_service import DocumentService
 from core.exceptions import AppBaseException
-from dto.guia_aerea_dtos import GuiaAereaRequest
+from dto.guia_aerea_dtos import GuiaAereaComboResponse, GuiaAereaDataGridResponse, GuiaAereaFiltroRequest, GuiaAereaRequest
+from dto.collection_response import CollectionResponse
 from dto.universal_dto import BaseOperacionResponse
 from utl.generic_util import GenericUtil
 import re
@@ -43,11 +48,18 @@ class DocumentFacadeImpl(DocumentFacade):
             raise AppBaseException(message=f"Error al procesar la solicitud: {e}")
 
 
-    async def get_all_documents(self, skip: int = 0, limit: int = 10):
-        return await self.document_service.get_all_documents(skip, limit)
+    async def find(self, request: GuiaAereaFiltroRequest) -> CollectionResponse[GuiaAereaDataGridResponse]:
+        data, total_count = await self.document_service.find(request)
+        elements = [Mapper.to_dto(x, GuiaAereaDataGridResponse) for x in data]
+        
+        return CollectionResponse[GuiaAereaDataGridResponse](
+            elements=elements,
+            totalCount=total_count,
+            start=request.start,
+            limit=request.limit
+        )
+
     
-
-
 
     def _validar_campos_requeridos_guia_aerea(self, guia: GuiaAereaRequest):
 
@@ -110,6 +122,11 @@ class DocumentFacadeImpl(DocumentFacade):
     async def _validate_files(self, files: List[UploadFile]):
         for file in files:
             await FileUtil.validate_file(file)
+
+    async def init(self) -> GuiaAereaComboResponse:
+        # TODO: Implement real logic. For now return empty or basic structure
+        # If there are catalogs to load, call services here.
+        return GuiaAereaComboResponse()
 
 
         

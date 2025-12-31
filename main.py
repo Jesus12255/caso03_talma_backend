@@ -22,7 +22,14 @@ async def on_startup():
     # Iniciar listener de Redis para WebSockets
     import asyncio
     from core.realtime.websocket import redis_connector
-    asyncio.create_task(redis_connector())
+    
+    # Keep a strong reference to the task to avoid it being garbage collected
+    if not hasattr(app.state, "background_tasks"):
+        app.state.background_tasks = set()
+    
+    task = asyncio.create_task(redis_connector())
+    app.state.background_tasks.add(task)
+    task.add_done_callback(app.state.background_tasks.discard)
 
 if __name__ == "__main__":
     import uvicorn

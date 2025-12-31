@@ -12,3 +12,5 @@ class DocumentRepository(BaseRepository[GuiaAerea], ABC):
     @abstractmethod
     async def get_by_id_with_relations(self, id: str) -> Optional[GuiaAerea]:
         pass
+
+    

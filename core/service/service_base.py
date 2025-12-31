@@ -1,5 +1,5 @@
 from typing import Optional
-from app.core.context.user_context import get_user_session, UserSession
+from core.context.user_context import get_user_session, UserSession
 from config.mapper import Mapper
 
 class ServiceBase:

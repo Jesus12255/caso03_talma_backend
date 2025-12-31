@@ -127,14 +127,14 @@ class Constantes:
         OBSERVACIONES = 0.01
 
 
-    class EstadoGuiaAerea: 
+    class EstadoRegistroGuiaAereea: 
         PROCESANDO = "ESTGA001"
         OBSERVADO = "ESTGA002"
         PROCESADO = "ESTGA003"
         ENVIADO = "ESTGA004"
         ACEPTADO = "ESTGA005"
         RECHAZADO = "ESTGA006"
-        VALIDADO = "ESTGA007"
+        
     
     class TipoGuiaAerea:
         MAESTRA = "TPGA001"
@@ -149,7 +149,9 @@ class Constantes:
         CONSIGNATARIO = "TPIN002"
        
 
-
+    class Vista:
+        GUIA_AEREA_REGISTROS = "VC001"
+        GUIA_AEREA_REGISTROS_SUBSANAR = "VC002"
 
 class Catalogo:
     VALORES_CONSTANTES = "VALORES_CONSTANTES"

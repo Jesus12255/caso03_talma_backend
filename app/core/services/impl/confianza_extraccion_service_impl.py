@@ -26,8 +26,8 @@ class ConfianzaExtraccionServiceImpl(ConfianzaExtraccionService, ServiceBase):
                 confianza.interviniente_id = remitente_id
             elif campo.startswith("consignatario."):
                 confianza.interviniente_id = consignatario_id
-            else:
-                 confianza.guia_aerea_id = guia_id
+            
+            confianza.guia_aerea_id = guia_id
 
             confianza.creado = DateUtil.get_current_local_datetime()
             confianza.creado_por = self.session.full_name

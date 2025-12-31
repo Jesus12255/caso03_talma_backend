@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.domain.guia_aerea import  GuiaAerea
-from sqlalchemy import select
+from app.core.domain.guia_aerea_data_grid import GuiaAereaDataGrid
+from sqlalchemy import select, func
 import uuid
 from sqlalchemy.orm import selectinload
 
@@ -33,5 +34,5 @@ class DocumentRepositoryImpl(BaseRepositoryImpl[GuiaAerea], DocumentRepository):
         )
         result = await self.db.execute(query)
         return result.scalars().first()
-
+    
     
