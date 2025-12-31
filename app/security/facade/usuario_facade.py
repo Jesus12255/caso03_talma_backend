@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from dto.collection_response import CollectionResponse
 from dto.universal_dto import BaseOperacionResponse
-from dto.usuario_dtos import UsuarioComboResponse, UsuarioFiltroRequest, UsuarioRequest, UsuarioResponse, UsuarioFiltroResponse, UsuarioStatusRequest
+from dto.usuario_dtos import UsuarioCambioPasswordRequest, UsuarioComboResponse, UsuarioFiltroRequest, UsuarioRequest, UsuarioResponse, UsuarioFiltroResponse, UsuarioStatusRequest
 
 
 class UsuarioFacade(ABC):
@@ -31,3 +31,6 @@ class UsuarioFacade(ABC):
     async def initForm(self) -> UsuarioComboResponse:
         pass
 
+    @abstractmethod
+    async def updatePassword(self, request: UsuarioCambioPasswordRequest) -> BaseOperacionResponse:
+        pass

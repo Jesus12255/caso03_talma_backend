@@ -3,8 +3,8 @@ from app.security.dependencies.dependencies_usuario import get_usuario_facade
 from app.security.facade.usuario_facade import UsuarioFacade
 from dto.collection_response import CollectionResponse
 from dto.universal_dto import BaseOperacionResponse
-from dto.usuario_dtos import UsuarioComboResponse, UsuarioFiltroRequest, UsuarioRequest, UsuarioResponse, UsuarioFiltroResponse, UsuarioStatusRequest
-from app.auth.dependencies.dependencies_auth import get_current_user
+from dto.usuario_dtos import UsuarioCambioPasswordRequest, UsuarioComboResponse, UsuarioFiltroRequest, UsuarioRequest, UsuarioResponse, UsuarioFiltroResponse, UsuarioStatusRequest
+
 
 router = APIRouter()
 
@@ -35,3 +35,8 @@ async def find(request: UsuarioFiltroRequest, usuario_facade: UsuarioFacade = De
 @router.post("/changeStatus", response_model=BaseOperacionResponse)
 async def changeStatus(request: UsuarioStatusRequest, usuario_facade: UsuarioFacade = Depends(get_usuario_facade)) -> BaseOperacionResponse:
     return await usuario_facade.changeStatus(request)
+
+
+@router.post("/updatePassword", response_model=BaseOperacionResponse)
+async def updatePassword(request: UsuarioCambioPasswordRequest, usuario_facade: UsuarioFacade = Depends(get_usuario_facade)) -> BaseOperacionResponse:
+    return await usuario_facade.updatePassword(request)
