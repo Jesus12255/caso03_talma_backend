@@ -191,7 +191,7 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         await self._validar_duplicados(guia_aerea)
         await self._validar_numero_formato(guia_aerea)
         await self.document_repository.save(guia_aerea)
-        await self.guia_aerea_interviniente_service.saveAndReprocess(guia_aerea)
+        await self.guia_aerea_interviniente_service.saveAndReprocess(t)
         
         
 

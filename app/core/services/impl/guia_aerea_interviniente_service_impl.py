@@ -14,6 +14,7 @@ from dto.interviniente_dtos import IntervinienteRequest
 from utl.constantes import Constantes
 from utl.date_util import DateUtil
 import re
+import uuid
 
 
 class GuiaAereaIntervinienteServiceImpl( GuiaAereaIntervinienteService, ServiceBase):
@@ -38,17 +39,25 @@ class GuiaAereaIntervinienteServiceImpl( GuiaAereaIntervinienteService, ServiceB
             await self.guia_aerea_interviniente_repository.save(guia_aerea_interviniente)
             if Constantes.TipoInterviniente.REMITENTE == guia_aerea_interviniente.rol_codigo:
                 nuevo_remitente = Mapper.to_entity(tt, GuiaAereaInterviniente)
+                nuevo_remitente.guia_aerea_interviniente_id = uuid.uuid4()
                 nuevo_remitente.guia_aerea_id = request.guiaAereaId
                 await self._set_manual_confidence(nuevo_remitente)
                 nuevo_remitente.version = guia_aerea_interviniente.version + 1
                 nuevo_remitente.es_version_activa = Constantes.HABILITADO
+                nuevo_remitente.habilitado = Constantes.HABILITADO
+                nuevo_remitente.creado = DateUtil.get_current_local_datetime()
+                nuevo_remitente.creado_por = Constantes.SYSTEM_USER
                 await self.guia_aerea_interviniente_repository.save(nuevo_remitente)
             if Constantes.TipoInterviniente.CONSIGNATARIO == guia_aerea_interviniente.rol_codigo:
                 nuevo_consignatario = Mapper.to_entity(tt, GuiaAereaInterviniente)
+                nuevo_consignatario.guia_aerea_interviniente_id = uuid.uuid4()
                 nuevo_consignatario.guia_aerea_id = request.guiaAereaId
                 await self._set_manual_confidence(nuevo_consignatario)
                 nuevo_consignatario.version = guia_aerea_interviniente.version + 1
                 nuevo_consignatario.es_version_activa = Constantes.HABILITADO
+                nuevo_consignatario.habilitado = Constantes.HABILITADO
+                nuevo_consignatario.creado = DateUtil.get_current_local_datetime()
+                nuevo_consignatario.creado_por = Constantes.SYSTEM_USER
                 await self.guia_aerea_interviniente_repository.save(nuevo_consignatario)
        
     

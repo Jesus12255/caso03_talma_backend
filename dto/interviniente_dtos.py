@@ -26,5 +26,5 @@ class GuiaAereaIntervinienteRequest(BaseModel):
     tipoDocumentoCodigo: Optional[str] = Field(None, max_length=40)
     numeroDocumento: Optional[str] = Field(None, max_length=20)
     rolCodigo: Optional[str] = Field(None, max_length=40)
-    version: Optional[int] 
+    
 
