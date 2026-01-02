@@ -13,3 +13,4 @@ class IntervinienteRequest(BaseModel):
     tipoDocumentoCodigo: Optional[str] = Field(None, max_length=40)
     numeroDocumento: Optional[str] = Field(None, max_length=20)
     tipoCodigo: Optional[str] = Field(None, max_length=40)
+

@@ -1,7 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.domain.guia_aerea import  GuiaAerea
-from app.core.domain.guia_aerea_data_grid import GuiaAereaDataGrid
-from sqlalchemy import select, func
+from sqlalchemy import select
 import uuid
 from sqlalchemy.orm import selectinload
 
@@ -30,7 +29,8 @@ class DocumentRepositoryImpl(BaseRepositoryImpl[GuiaAerea], DocumentRepository):
 
     async def get_by_id_with_relations(self, id: str) -> GuiaAerea | None:
         query = select(GuiaAerea).where(GuiaAerea.guia_aerea_id == id).options(
-            selectinload(GuiaAerea.confianzas_extraccion)
+            selectinload(GuiaAerea.confianzas_extraccion),
+            selectinload(GuiaAerea.intervinientes)
         )
         result = await self.db.execute(query)
         return result.scalars().first()

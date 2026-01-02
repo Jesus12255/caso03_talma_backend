@@ -18,9 +18,3 @@ class Interviniente(BaseModel):
     tipo_documento_codigo = Column(String(40), nullable=True)
     numero_documento = Column(String(20), nullable=True)
     tipo_codigo = Column(String(40), nullable=False)
-
-    confianzas_extraccion = relationship(
-        "ConfianzaExtraccion",
-        back_populates="interviniente",
-        cascade="all, delete-orphan"
-    )

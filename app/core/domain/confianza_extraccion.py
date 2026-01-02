@@ -16,7 +16,7 @@ from app.core.domain.base_model import BaseModel
 
 
 class ConfianzaExtraccion(BaseModel):
-    __tablename__ = "confianza_extraccion"
+    __tablename__ = "confianza_extraccion1"
 
     confianza_extraccion_id = Column(
         UUID(as_uuid=True),
@@ -24,35 +24,17 @@ class ConfianzaExtraccion(BaseModel):
         default=uuid.uuid4
     )
 
-    guia_aerea_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("guia_aerea.guia_aerea_id"),
-        nullable=True
-    )
-
-    interviniente_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("interviniente.interviniente_id"),
-        nullable=True
-    )
+    # Polymorphic Foreign Key
+    entidad_tipo = Column(String(40), nullable=False)
+    entidad_id = Column(UUID(as_uuid=True), nullable=False)
 
     nombre_campo = Column(String(100), nullable=False)
-
+    
     valor_extraido = Column(Text)
-    valor_final = Column(Text)
-
+    
     confidence_modelo = Column(Float, nullable=False)
-    confidence_final = Column(Float, nullable=False)
 
-    corregido_manual = Column(Boolean, default=False)
-    validado = Column(Boolean, default=False)
+    modelo_codigo = Column(String(50), nullable=True)
+    modelo_version = Column(String(20), nullable=True)
 
-    guia_aerea = relationship(
-        "GuiaAerea",
-        back_populates="confianzas_extraccion"
-    )
-
-    interviniente = relationship(
-        "Interviniente",
-        back_populates="confianzas_extraccion"
-    )
+    fecha_extraccion = Column(TIMESTAMP(timezone=False), server_default=func.now())

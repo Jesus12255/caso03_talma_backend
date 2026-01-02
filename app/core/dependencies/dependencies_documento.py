@@ -1,6 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.dependencies.dependencies_confianza_extraccion import get_confianza_extraccion_service
+from app.core.dependencies.dependencies_confianza_extraccion import get_confianza_extraccion_repository, get_confianza_extraccion_service
+from app.core.dependencies.dependencies_guia_aerea_interviniente import get_guia_aerea_interviniente_service
 from app.core.dependencies.dependencies_interviniente import get_interviniente_service
 from app.core.facade.impl.document_facade_impl import DocumentFacadeImpl
 from app.core.repository.impl.document_repository_impl import DocumentRepositoryImpl
@@ -14,8 +15,8 @@ def get_document_repository(db: AsyncSession = Depends(get_db)):
 def get_guia_aerea_filtro_repository(db: AsyncSession = Depends(get_db)):
     return GuiaAereaFiltroRepositoryImpl(db)
 
-def get_document_service(repository = Depends(get_document_repository), guia_aerea_filtro_repository = Depends(get_guia_aerea_filtro_repository), interviniente_service = Depends(get_interviniente_service), confianza_extraccion_service = Depends(get_confianza_extraccion_service)):
-    return DocumentServiceImpl(repository, guia_aerea_filtro_repository, interviniente_service, confianza_extraccion_service)
+def get_document_service(repository = Depends(get_document_repository), guia_aerea_filtro_repository = Depends(get_guia_aerea_filtro_repository), interviniente_service = Depends(get_interviniente_service), confianza_extraccion_service = Depends(get_confianza_extraccion_service), confianza_extraccion_repository = Depends(get_confianza_extraccion_repository), guia_aerea_interviniente_service = Depends(get_guia_aerea_interviniente_service)):
+    return DocumentServiceImpl(repository, guia_aerea_filtro_repository, interviniente_service, confianza_extraccion_service, confianza_extraccion_repository, guia_aerea_interviniente_service)
 
-def get_document_facade(service = Depends(get_document_service)):
-    return DocumentFacadeImpl(service)
+def get_document_facade(service = Depends(get_document_service), guia_aerea_interviniente_service = Depends(get_guia_aerea_interviniente_service)):
+    return DocumentFacadeImpl(service, guia_aerea_interviniente_service)

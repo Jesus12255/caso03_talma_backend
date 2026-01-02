@@ -3,22 +3,30 @@ from sqlalchemy.dialects.postgresql import UUID
 from app.core.domain.base_model import Base
 
 class GuiaAereaDataGrid(Base):
-    __tablename__ = 'guia_aerea_view'
+    __tablename__ = 'guia_aerea1_view'
     
     guia_aerea_id = Column(UUID(as_uuid=True), primary_key=True)
-    remitente_id = Column(UUID(as_uuid=True))
+    
+    # Mapped to remitente_gai_id from view
+    remitente_id = Column("remitente_gai_id", UUID(as_uuid=True)) 
     nombre_remitente = Column(String)
     direccion_remitente = Column(String)
     telefono_remitente = Column(String)
-    consignatario_id = Column(UUID(as_uuid=True))
+    ciudad_remitente = Column(String)
+    pais_remitente = Column(String)
+
+    # Mapped to consignatario_gai_id from view
+    consignatario_id = Column("consignatario_gai_id", UUID(as_uuid=True))
     nombre_consignatario = Column(String)
     direccion_consignatario = Column(String)
     telefono_consignatario = Column(String)
+    ciudad_consignatario = Column(String)
+    pais_consignatario = Column(String)
+
     numero = Column(String)
     tipo_codigo = Column(String)
     tipo = Column(String)
     fecha_emision = Column(TIMESTAMP(timezone=False))
-    estado_guia_codigo = Column(String)
     origen_codigo = Column(String)
     destino_codigo = Column(String)
     transbordo = Column(String)

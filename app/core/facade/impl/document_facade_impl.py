@@ -2,6 +2,7 @@ import json
 import logging
 from typing import List, Any
 from uuid import UUID
+from app.core.services.guia_aerea_interviniente_service import GuiaAereaIntervinienteService
 from config.mapper import Mapper
 from core.tasks.document_tasks import process_document_validations
 from utl.file_util import FileUtil
@@ -14,7 +15,7 @@ from fastapi.params import File
 from app.core.facade.document_facade import DocumentFacade
 from app.core.services.document_service import DocumentService
 from core.exceptions import AppBaseException
-from dto.guia_aerea_dtos import GuiaAereaComboResponse, GuiaAereaDataGridResponse, GuiaAereaFiltroRequest, GuiaAereaRequest
+from dto.guia_aerea_dtos import GuiaAereaComboResponse, GuiaAereaDataGridResponse, GuiaAereaFiltroRequest, GuiaAereaIntervinienteResponse, GuiaAereaRequest, GuiaAereaResponse
 from dto.collection_response import CollectionResponse
 from dto.universal_dto import BaseOperacionResponse
 from utl.generic_util import GenericUtil
@@ -25,8 +26,9 @@ logger = logging.getLogger(__name__)
 
 class DocumentFacadeImpl(DocumentFacade):
 
-    def __init__(self, document_service: DocumentService):
+    def __init__(self, document_service: DocumentService, guia_aerea_interviniente_service: GuiaAereaIntervinienteService):
         self.document_service = document_service
+        self.guia_aerea_interviniente_service = guia_aerea_interviniente_service
 
 
     async def saveOrUpdate(self, files: List[UploadFile] = File(...), requestForm: str = Form(...)) -> BaseOperacionResponse:
@@ -39,7 +41,7 @@ class DocumentFacadeImpl(DocumentFacade):
                 self._validar_campos_requeridos_guia_aerea(obj_req)
                 await self.document_service.saveOrUpdate(obj_req)
                 if obj_req.guiaAereaId:
-                    process_document_validations.delay(str(obj_req.guiaAereaId))
+                    process_document_validations.delay(obj_req.model_dump_json())
             return BaseOperacionResponse(codigo="200", mensaje="Documentos recibidos. Procesando en segundo plano.")
         
         except Exception as e:
@@ -63,6 +65,23 @@ class DocumentFacadeImpl(DocumentFacade):
     async def reprocess(self, document_id: UUID) -> BaseOperacionResponse:
         process_document_validations.delay(str(document_id))
         return BaseOperacionResponse(codigo="200", mensaje="Reprocesando en segundo plano.")
+
+
+    async def get(self, guia_aerea_id: UUID) -> GuiaAereaResponse:
+        guia_aerea = await self.document_service.get(guia_aerea_id)
+        guia_aerea_response = Mapper.to_dto(guia_aerea, GuiaAereaResponse)
+        guia_aerea_intervinientes_response = []
+        guia_aerea_intervinientes = await self.guia_aerea_interviniente_service.get_by_guia_aerea_id(guia_aerea_id)
+        for interviniente in guia_aerea_intervinientes:
+            guia_aerea_intervinientes_response.append(Mapper.to_dto(interviniente, GuiaAereaIntervinienteResponse))
+        guia_aerea_response.intervinientesValidos = guia_aerea_intervinientes_response
+        return guia_aerea_response
+
+
+    async def update(request: GuiaAereaRequest)  -> BaseOperacionResponse:
+        
+        return BaseOperacionResponse(codigo="200", mensaje="Guía aérea reprocesada correctamente.")
+
 
     def _validar_campos_requeridos_guia_aerea(self, guia: GuiaAereaRequest):
 
@@ -114,6 +133,7 @@ class DocumentFacadeImpl(DocumentFacade):
     def _validate_request(self, requestForm: str = Form(...)) -> List[GuiaAereaRequest]:
         try:
             request = json.loads(requestForm)
+            
         except json.JSONDecodeError:
             raise AppBaseException(message="El formato del JSON no es válido")
             
