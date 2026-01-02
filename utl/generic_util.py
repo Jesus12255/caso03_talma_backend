@@ -174,9 +174,6 @@ class GenericUtil:
 
 
     @staticmethod
-    def generate_unique_code_8() -> str:
-        
-        now = datetime.now()
-        time_part = now.strftime("%M%S")
+    def generate_unique_code_4() -> str:
         random_part = random.randint(1000, 9999)
-        return f"{time_part}{random_part}"
+        return f"{random_part}"

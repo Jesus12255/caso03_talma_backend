@@ -44,7 +44,7 @@ class UsuarioServiceImpl(UsuarioService, FacadeBase):
         else:
             print("DEBUG: Creating new user...") # Debug logic
             usuario = self.modelMapper.to_entity(t, Usuario)
-            usuario.usuario = t.primerNombre + t.apellidoPaterno + GenericUtil.generate_unique_code_8()
+            usuario.usuario = t.primerNombre + t.apellidoPaterno + GenericUtil.generate_unique_code_4()
             
             # Capture the raw password to send via email
             raw_password = settings.PASWORD_INICIAL
