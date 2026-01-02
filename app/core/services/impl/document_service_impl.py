@@ -17,7 +17,7 @@ from config.mapper import Mapper
 from core.exceptions import AppBaseException
 from core.service.service_base import ServiceBase
 from dto.confianza_extraccion_dtos import GuiaAereaConfianzaRequest
-from dto.guia_aerea_dtos import  GuiaAereaFiltroRequest, GuiaAereaRequest
+from dto.guia_aerea_dtos import  GuiaAereaFiltroRequest, GuiaAereaRequest, GuiaAereaSubsanarRequest
 from utl.constantes import Constantes
 from utl.date_util import DateUtil
 import re
@@ -35,47 +35,13 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
 
     async def saveOrUpdate(self, t: GuiaAereaRequest):
         documento = None
-        
-        if t.guiaAereaId:
-            documento = await self.get_with_relations(t.guiaAereaId)
-            # Update core fields
-            documento.numero = t.numero
-            documento.tipo_codigo = t.tipoCodigo
-            documento.fecha_emision = t.fechaEmision
-            documento.origen_codigo = t.origenCodigo
-            documento.destino_codigo = t.destinoCodigo
-            documento.transbordo = t.transbordo
-            documento.aerolinea_codigo = t.aerolineaCodigo
-            documento.numero_vuelo = t.numeroVuelo
-            documento.fecha_vuelo = t.fechaVuelo
-            documento.descripcion_mercancia = t.descripcionMercancia
-            documento.cantidad_piezas = t.cantidadPiezas
-            documento.peso_bruto = t.pesoBruto
-            documento.peso_cobrado = t.pesoCobrado
-            documento.unidad_peso_codigo = t.unidadPesoCodigo
-            documento.volumen = t.volumen
-            documento.naturaleza_carga_codigo = t.naturalezaCargaCodigo
-            documento.valor_declarado = t.valorDeclarado
-            documento.tipo_flete_codigo = t.tipoFleteCodigo
-            documento.tarifa_flete = t.tarifaFlete
-            documento.otros_cargos = t.otrosCargos
-            documento.moneda_codigo = t.monedaCodigo
-            documento.total_flete = t.totalFlete
-            documento.instrucciones_especiales = t.instruccionesEspeciales
-            documento.observaciones = t.observaciones
-            
-            documento.modificado = DateUtil.get_current_local_datetime()
-            documento.modificado_por = self.session.full_name
-          
-            
-        else: 
-            documento = Mapper.to_entity(t, GuiaAerea)
-            documento.habilitado = Constantes.HABILITADO
-            documento.creado = DateUtil.get_current_local_datetime()
-            documento.creado_por = self.session.full_name
-            documento.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.PROCESANDO
-            await self.document_repository.save(documento)
-            t.guiaAereaId = documento.guia_aerea_id
+        documento = Mapper.to_entity(t, GuiaAerea)
+        documento.habilitado = Constantes.HABILITADO
+        documento.creado = DateUtil.get_current_local_datetime()
+        documento.creado_por = self.session.full_name
+        documento.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.PROCESANDO
+        await self.document_repository.save(documento)
+        t.guiaAereaId = documento.guia_aerea_id
             
 
     async def save_all_confianza_extraccion(self, t: GuiaAereaRequest):
@@ -94,11 +60,6 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
                 confianzas_extraccion.append(confianza_extraccion)
                 confianza.guiaAereaId = t.guiaAereaId
         await self.confianza_extraccion_repository.save_all(confianzas_extraccion)
-            
-
-
-
-    
 
     
     async def find(self, request: GuiaAereaFiltroRequest) -> tuple[List[GuiaAereaDataGrid], int]:
@@ -146,11 +107,94 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         )
         return data, total_count
 
-    async def get(self, documentoId: str):
+    async def get(self, documentoId: str) -> GuiaAerea:
         documento = await self.document_repository.get_by_id(documentoId)
         if documento is not None:
             return documento
         raise AppBaseException("El documento no se encuentra registrado")
+
+    async def updateAndReprocess(self, t: GuiaAereaSubsanarRequest):
+        guia_aerea = await self.get(t.guiaAereaId)
+        guia_aerea.numero = t.numero
+        guia_aerea.confidence_numero = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.fecha_emision = t.fechaEmision
+        guia_aerea.confidence_fecha_emision = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.origen_codigo = t.origenCodigo
+        guia_aerea.confidence_origen_codigo = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.destino_codigo = t.destinoCodigo
+        guia_aerea.confidence_destino_codigo = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.transbordo = t.transbordo
+        guia_aerea.confidence_transbordo = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.aerolinea_codigo = t.aerolineaCodigo
+        guia_aerea.confidence_aerolinea_codigo = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.numero_vuelo = t.numeroVuelo
+        guia_aerea.confidence_numero_vuelo = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.fecha_vuelo = t.fechaVuelo
+        guia_aerea.confidence_fecha_vuelo = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.descripcion_mercancia = t.descripcionMercancia
+        guia_aerea.confidence_descripcion_mercancia = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.cantidad_piezas = t.cantidadPiezas
+        guia_aerea.confidence_cantidad_piezas = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.peso_bruto = t.pesoBruto
+        guia_aerea.confidence_peso_bruto = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.peso_cobrado = t.pesoCobrado
+        guia_aerea.confidence_peso_cobrado = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.unidad_peso_codigo = t.unidadPesoCodigo
+        guia_aerea.confidence_unidad_peso_codigo = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.volumen = t.volumen
+        guia_aerea.confidence_volumen = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.naturaleza_carga_codigo = t.naturalezaCargaCodigo
+        guia_aerea.confidence_naturaleza_carga_codigo = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.valor_declarado = t.valorDeclarado
+        guia_aerea.confidence_valor_declarado = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.tipo_flete_codigo = t.tipoFleteCodigo
+        guia_aerea.confidence_tipo_flete_codigo = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.tarifa_flete = t.tarifaFlete
+        guia_aerea.confidence_tarifa_flete = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.otros_cargos = t.otrosCargos
+        guia_aerea.confidence_otros_cargos = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.moneda_codigo = t.monedaCodigo
+        guia_aerea.confidence_moneda_codigo = Constantes.VALIDATE_MANUAL_CONFIDENCE
+        
+        guia_aerea.total_flete = t.totalFlete
+        guia_aerea.confidence_total_flete = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+        guia_aerea.instrucciones_especiales = t.instruccionesEspeciales
+        guia_aerea.confidence_instrucciones_especiales = Constantes.VALIDATE_MANUAL_CONFIDENCE
+
+
+        guia_aerea.confidence_total = Constantes.VALIDATE_MANUAL_CONFIDENCE
+        guia_aerea.estado_confianza_codigo = Constantes.EstadoConfianza.REVISION_MANUAL
+        guia_aerea.observaciones = Constantes.EMPTY
+        guia_aerea.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.PROCESADO
+        guia_aerea.modificado = DateUtil.get_current_local_datetime()
+        guia_aerea.modificado_por = self.session.full_name
+        await self._validar_duplicados(guia_aerea)
+        await self._validar_numero_formato(guia_aerea)
+        await self.document_repository.save(guia_aerea)
+        await self.guia_aerea_interviniente_service.saveAndReprocess(guia_aerea)
+        
+        
+
 
     async def get_with_relations(self, documentoId: str):
         documento = await self.document_repository.get_by_id_with_relations(documentoId)

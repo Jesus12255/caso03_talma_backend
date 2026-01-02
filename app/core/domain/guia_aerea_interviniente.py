@@ -13,6 +13,8 @@ from app.core.domain.base_model import BaseModel
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column, String, Boolean
 
+
+
 class GuiaAereaInterviniente(BaseModel):
     __tablename__ = "guia_aerea_interviniente"
 

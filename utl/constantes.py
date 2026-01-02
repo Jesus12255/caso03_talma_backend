@@ -1,6 +1,7 @@
 class Constantes:
     BLANK_SPACE = " "
     SYSTEM_USER = "SYSTEM"
+    VALIDATE_MANUAL_CONFIDENCE = 1
     VALID_FILE_FORMATS = {
         '.pdf':  {'mime': {'application/pdf'}, 'magic': b'%PDF'},
         '.jpg':  {'mime': {'image/jpeg'}, 'magic': b'\xFF\xD8\xFF'},

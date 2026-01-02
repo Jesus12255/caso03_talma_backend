@@ -11,6 +11,10 @@ class GuiaAereaIntervinienteService(ABC):
         pass
 
     @abstractmethod
+    async def saveAndReprocess(self, request: GuiaAereaRequest):
+        pass
+
+    @abstractmethod
     async def get_by_guia_aerea_id(self, guia_aerea_id: str) -> List[GuiaAereaInterviniente]:
         pass
 

@@ -16,6 +16,7 @@ from sqlalchemy.orm import  relationship
 from app.core.domain.guia_aerea_interviniente import GuiaAereaInterviniente
 
 
+
 class GuiaAerea(BaseModel):
     __tablename__ = "guia_aerea1"
 

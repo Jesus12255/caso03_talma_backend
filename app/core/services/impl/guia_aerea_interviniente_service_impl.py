@@ -8,11 +8,12 @@ from app.core.services.guia_aerea_interviniente_service import GuiaAereaIntervin
 from config.mapper import Mapper
 from core.exceptions import AppBaseException
 from core.service.service_base import ServiceBase
-from dto.guia_aerea_dtos import GuiaAereaRequest
+from dto.guia_aerea_dtos import GuiaAereaRequest, GuiaAereaSubsanarRequest
 from dto.confianza_extraccion_dtos import GuiaAereaConfianzaRequest
 from dto.interviniente_dtos import IntervinienteRequest
 from utl.constantes import Constantes
 from utl.date_util import DateUtil
+import re
 
 
 class GuiaAereaIntervinienteServiceImpl( GuiaAereaIntervinienteService, ServiceBase):
@@ -29,6 +30,39 @@ class GuiaAereaIntervinienteServiceImpl( GuiaAereaIntervinienteService, ServiceB
         await self._save_interviniente(remitente_req, "remitente", request.confianzas, Constantes.TipoInterviniente.REMITENTE, request.guiaAereaId)
         await self._save_interviniente(consignatario_req, "consignatario", request.confianzas, Constantes.TipoInterviniente.CONSIGNATARIO, request.guiaAereaId)
 
+    async def saveAndReprocess(self, request: GuiaAereaSubsanarRequest):
+        for tt in request.intervinientes: 
+            guia_aerea_interviniente =  await self.get_by_id(tt.guiaAereaIntervinienteId)
+            guia_aerea_interviniente.es_version_activa = Constantes.INHABILITADO
+            guia_aerea_interviniente.habilitado = Constantes.INHABILITADO
+            await self.guia_aerea_interviniente_repository.save(guia_aerea_interviniente)
+            if Constantes.TipoInterviniente.REMITENTE == guia_aerea_interviniente.rol_codigo:
+                nuevo_remitente = Mapper.to_entity(tt, GuiaAereaInterviniente)
+                nuevo_remitente.guia_aerea_id = request.guiaAereaId
+                await self._set_manual_confidence(nuevo_remitente)
+                nuevo_remitente.version = guia_aerea_interviniente.version + 1
+                nuevo_remitente.es_version_activa = Constantes.HABILITADO
+                await self.guia_aerea_interviniente_repository.save(nuevo_remitente)
+            if Constantes.TipoInterviniente.CONSIGNATARIO == guia_aerea_interviniente.rol_codigo:
+                nuevo_consignatario = Mapper.to_entity(tt, GuiaAereaInterviniente)
+                nuevo_consignatario.guia_aerea_id = request.guiaAereaId
+                await self._set_manual_confidence(nuevo_consignatario)
+                nuevo_consignatario.version = guia_aerea_interviniente.version + 1
+                nuevo_consignatario.es_version_activa = Constantes.HABILITADO
+                await self.guia_aerea_interviniente_repository.save(nuevo_consignatario)
+       
+    
+    async def _set_manual_confidence(self, nuevo_interviniente : GuiaAereaInterviniente):
+        nuevo_interviniente.confidence_nombre = Constantes.VALIDATE_MANUAL_CONFIDENCE
+        nuevo_interviniente.confidence_direccion  = Constantes.VALIDATE_MANUAL_CONFIDENCE
+        nuevo_interviniente.confidence_ciudad = Constantes.VALIDATE_MANUAL_CONFIDENCE
+        nuevo_interviniente.confidence_pais_codigo = Constantes.VALIDATE_MANUAL_CONFIDENCE
+        nuevo_interviniente.confidence_telefono = Constantes.VALIDATE_MANUAL_CONFIDENCE
+        nuevo_interviniente.confidence_tipo_documento_codigo = Constantes.VALIDATE_MANUAL_CONFIDENCE
+        nuevo_interviniente.confidence_numero_documento = Constantes.VALIDATE_MANUAL_CONFIDENCE
+     
+
+
     async def get_by_guia_aerea_id(self, guia_aerea_id: str) -> List[GuiaAereaInterviniente]:
         return await self.guia_aerea_interviniente_repository.get_by_guia_aerea_id(guia_aerea_id)
 
@@ -38,6 +72,7 @@ class GuiaAereaIntervinienteServiceImpl( GuiaAereaIntervinienteService, ServiceB
     async def update(self, interviniente: GuiaAereaInterviniente) -> GuiaAereaInterviniente:
         return await self.guia_aerea_interviniente_repository.save(interviniente)
 
+    
 
 
 
@@ -76,7 +111,10 @@ class GuiaAereaIntervinienteServiceImpl( GuiaAereaIntervinienteService, ServiceB
         confianza_extraccion.entidad_tipo = tipo
         confianza_extraccion.entidad_id = guia_aerea_interviniente.guia_aerea_interviniente_id
         confianza_extraccion.nombre_campo = campo
-        confianza_extraccion.valor_extraido = guia_aerea_interviniente.nombre
+        nombre_atributo = campo.split(".")[-1]
+        # Convert camelCase to snake_case for attribute access
+        atributo_snake = re.sub(r'(?<!^)(?=[A-Z])', '_', nombre_atributo).lower()
+        confianza_extraccion.valor_extraido = getattr(guia_aerea_interviniente, atributo_snake, None)
         confianza_extraccion.confidence_modelo = confianzaRequest.confidenceModelo
         confianza_extraccion.habilitado = Constantes.HABILITADO
         confianza_extraccion.creado = DateUtil.get_current_local_datetime()

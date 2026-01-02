@@ -7,7 +7,7 @@ from uuid import UUID
 
 from dto.base_request import BaseRequest
 from dto.confianza_extraccion_dtos import GuiaAereaConfianzaRequest
-from dto.interviniente_dtos import IntervinienteRequest
+from dto.interviniente_dtos import GuiaAereaIntervinienteRequest, IntervinienteRequest
 from dto.universal_dto import ComboBaseResponse
 
 class DatoRequest(BaseModel):
@@ -93,6 +93,7 @@ class GuiaAereaIntervinienteResponse(BaseModel):
     numeroDocumento: Optional[str] = None
     confidenceNumeroDocumento: Optional[float] = None
 
+
     
 
 class GuiaAereaResponse(BaseModel):
@@ -176,6 +177,7 @@ class GuiaAereaResponse(BaseModel):
     intervinientesValidos: Optional[List[GuiaAereaIntervinienteResponse]] = Field(default_factory=list)
 
 
+ 
 
 
 
@@ -184,7 +186,6 @@ class GuiaAereaSubsanarRequest(BaseModel):
     
     guiaAereaId: Optional[UUID] = None
     numero: Optional[str] = None
-    tipoCodigo: Optional[str] = None
     fechaEmision: Optional[datetime] = None
     origenCodigo: Optional[str] = None
     destinoCodigo: Optional[str] = None
@@ -206,7 +207,7 @@ class GuiaAereaSubsanarRequest(BaseModel):
     monedaCodigo: Optional[str] = None
     totalFlete: Optional[Decimal] = None
     instruccionesEspeciales: Optional[str] = None
-
+    intervinientes : Optional[List[GuiaAereaIntervinienteRequest]] = Field(default=None)
 
 
 
