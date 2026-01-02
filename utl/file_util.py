@@ -43,6 +43,10 @@ class FileUtil:
 
         ext = '.' + file.filename.split('.')[-1].lower() if '.' in file.filename else ''
         
+        # 0. Validacion de tamanio
+        if file.size > Constantes.MAX_FILE_SIZE:
+             raise AppBaseException(message=f"El archivo '{file.filename}' excede el tamaño máximo permitido ({Constantes.MAX_FILE_SIZE_TEXT}).")
+
         # 1. Validacion rapida: Extension y MIME
         if ext not in VALID_FORMATS:
             raise AppBaseException(message=f"El archivo '{file.filename}' tiene una extensión no permitida.")
