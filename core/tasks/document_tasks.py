@@ -56,6 +56,6 @@ async def _process_validations_async(obj_req: str):
             doc_id = t.guiaAereaId if t else "Desconocido"
             logger.error(f"Error procesando documento {doc_id}: {e}")
 
-@celery_app.task(name="core.tasks.document_tasks.process_document_validations")
+@celery_app.task(name="app.core.tasks.document_tasks.process_document_validations")
 def process_document_validations(obj_req: str):
     asyncio.run(_process_validations_async(obj_req))
