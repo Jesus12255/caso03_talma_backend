@@ -1,111 +1,254 @@
-import base64
 import asyncio
+import base64
 import logging
-from io import BytesIO
-import fitz
-from typing import Any, Dict, List
+from typing import List, TypedDict
+
 from fastapi import UploadFile
 
+from app.core.facade.document_facade import DocumentFacade
 from app.core.services.analyze_service import AnalyzeService
+from app.core.services.document_service import DocumentService
 from app.integration.extraction_engine import ExtractionEngine
 from core.exceptions import AppBaseException
+from core.tasks.document_tasks import process_document_validations
+from dto.universal_dto import BaseOperacionResponse
+from utl.file_parser import FileParser
 from utl.file_util import FileUtil
+from dto.guia_aerea_dtos import GuiaAereaRequest
 
 logger = logging.getLogger(__name__)
 
-def process_file_content(content: bytes, filename: str) -> List[str]:
-    """
-    CPU-bound task to convert PDF/Images to base64.
-    Executed in a thread pool to avoid blocking the main event loop.
-    """
-    base64_results = []
 
-    if FileUtil.is_valid_pdf(content):
-        try:
-            doc = fitz.open(stream=BytesIO(content), filetype="pdf")
-            for page in doc:
-                pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
-                img_bytes = pix.tobytes("jpeg")
-                base64_results.append(base64.b64encode(img_bytes).decode("utf-8"))
-            doc.close()
-        except Exception as e:
-            logger.error(f"Error processing PDF {filename}: {e}", exc_info=True)
-            return []
+class FileData(TypedDict):
+    filename: str
+    content: bytes
 
-    elif FileUtil.is_valid_image(content):
-        base64_results.append(base64.b64encode(content).decode("utf-8"))
-
-    return base64_results
 
 class AnalyzeServiceImpl(AnalyzeService):
 
-    def __init__(self, extraction_engine: ExtractionEngine):
+    def __init__(self, extraction_engine: ExtractionEngine, document_service: DocumentService, document_facade: DocumentFacade):
         self.extraction_engine = extraction_engine
+        self.document_service = document_service
+        self.document_facade = document_facade
 
-    async def upload(self, t: List[UploadFile]) -> List[Dict[str, Any]]:
-        results = []
-        loop = asyncio.get_running_loop()
+    async def process_stream(self, files_data: List[FileData]):
 
-        for file in t:
-            content = await file.read()
-            # Offload CPU-bound work to thread pool
-            pages = await loop.run_in_executor(None, process_file_content, content, file.filename)
+        if not files_data:
+            yield {"type": "error", "message": "No se encontraron documentos válidos"}
+            return
 
-            if not pages:
-                logger.warning(f"File {file.filename} is corrupt or invalid.")
-                raise AppBaseException(
-                    message=f"El archivo {file.filename} está corrupto, vacío o tiene un formato no soportado."
-                )
+        yield {"type": "thinking", "message": "Iniciando escaneo de superficie digital..."}
+
+        # 1. Prepare Tasks with Granular Feedback
+        tasks = []
+        page_index = 1
+        
+        for idx, f in enumerate(files_data, start=1):
+            filename = f["filename"]
+            yield {"type": "thinking", "message": f"Vectorizando contenido de {filename}..."}
             
-            file_extracted_data = []
-            for idx, page_img in enumerate(pages):
-                data = await self.extraction_engine.extract_data_from_image(page_img)
-                file_extracted_data.append({
-                    "page": idx + 1,
-                    "content": data
-                })
-
-            results.append({
-                "filename": file.filename,
-                "total_pages": len(pages),
-                "data": file_extracted_data
-            })
-
-        return results
-
-
-    async def upload_stream(self, files_data: List[Dict[str, Any]]):
-        all_pages = []
-        total_files = len(files_data)
-        loop = asyncio.get_running_loop()
-
-        for idx, file_data in enumerate(files_data):
-            filename = file_data.get("filename")
-            content = file_data.get("content")
+            content = f["content"]
+            task_info = await self._build_task(content, filename, page_index)
             
-            yield f"data: Procesando archivo {idx + 1}/{total_files}: {filename}...\n\n"
-
-            # Offload CPU-bound work to thread pool
-            try:
-                pages = await loop.run_in_executor(None, process_file_content, content, filename)
-            except Exception as e:
-                logger.error(f"Error executing process_file_content for {filename}: {e}", exc_info=True)
-                pages = []
-
-            if not pages:
-                logger.warning(f"File {filename} yielded no pages.")
-                yield f"data: [ERROR] Archivo {filename} inválido o vacío\n\n"
+            if not task_info:
+                yield {"type": "warning", "message": f"No se pudo leer el archivo {filename}"}
                 continue
 
-            all_pages.extend(pages)
+            task, pages = task_info
+            tasks.append((task, filename))
+            page_index += pages
+            
+            yield {"type": "thinking", "message": f"Documento {filename} preparado para análisis."}
 
-        if not all_pages:
-             yield "data: [ERROR] No se encontraron imágenes válidas para analizar.\n\n"
-             return
+        # 2. Execute Analysis with Real-time Progress
+        yield {"type": "thinking", "message": "Iniciando extracción neuronal paralela..."}
+        
+        documents = []
+        async for event in self._execute_tasks_stream(tasks):
+            if event["type"] == "thinking":
+                 yield event
+            elif event["type"] == "result":
+                 documents.extend(event["data"])
+        
+        # Notify about invalid documents
+        for doc in documents:
+            if doc.get("error") == "DOCUMENTO_INVALIDO":
+                 yield {"type": "warning", "message": f"El archivo {doc.get('fileName')} no es una guía aérea válida."}
 
-        yield f"data: Iniciando análisis con IA de {len(all_pages)} páginas en total...\n\n"
+        yield {"type": "response", "documents": documents}
 
-        async for token in self.extraction_engine.extract_stream(all_pages):
-            yield f"data: {token}\n\n"
+        # 3. Save
+        async for event in self._auto_save(documents):
+            yield event
 
-        yield "data: [OK] Análisis completado.\n\n"
+        yield {"type": "thinking", "message": "Proceso finalizado con éxito."}
+
+
+    async def read_and_validate(self, files: List[UploadFile]) -> List[FileData]:
+        result: List[FileData] = []
+
+        for file in files:
+            await FileUtil.validate_file(file)
+            content = await file.read()
+            result.append({
+                "filename": file.filename,
+                "content": content
+            })
+        return result
+
+    async def _prepare_tasks(self, files: List[FileData]):
+        # DEPRECATED: Logic moved to process_stream for better feedback control
+        pass
+
+    async def _build_task(self, content: bytes, filename: str, start_index: int):
+        if FileUtil.is_valid_xlsx(content) or FileUtil.is_valid_docx(content):
+            loop = asyncio.get_running_loop()
+            _, text = await loop.run_in_executor(
+                None,
+                FileParser.parse,
+                content,
+                filename
+            )
+
+            if not text:
+                return None
+
+            return (
+                self.extraction_engine.extract_single_document(
+                    base64.b64encode(text.encode()).decode(),
+                    "text/plain",
+                    1,
+                    start_index
+                ),
+                1
+            )
+
+        binary = self._prepare_binary_document(content, filename)
+        if not binary:
+            return None
+
+        return (
+            self.extraction_engine.extract_single_document(
+                binary["base64"],
+                binary["mime_type"],
+                binary["page_count"],
+                start_index
+            ),
+            binary["page_count"]
+        )
+
+    def _prepare_binary_document(self, content: bytes, filename: str):
+        images, _ = FileParser.parse(content, filename)
+
+        if not images:
+            return None
+
+        return {
+            "base64": images[0],
+            "mime_type": "image/jpeg",
+            "page_count": len(images)
+        }
+
+    async def _execute_tasks_stream(self, tasks):
+        
+        async def safe(task, filename):
+            try:
+                result = await task
+                return result, filename
+            except Exception as e:
+                logger.exception("Error procesando %s", filename)
+                return [{"error": str(e)}], filename
+
+        running = [safe(task, fname) for task, fname in tasks]
+        
+        if not running:
+            return
+
+        for future in asyncio.as_completed(running):
+            results, fname = await future
+            
+            # Yield progress for this file
+            yield {"type": "thinking", "message": f"Entidades extraídas de {fname}..."}
+            
+            # Check if it is an invalid document error (Rule 9)
+            if results and isinstance(results, list) and results[0].get("error"):
+                 yield {"type": "result", "data": [{
+                     "fileName": fname,
+                     "error": results[0].get("error"),
+                     "message": results[0].get("mensaje", "Error desconocido"),
+                     "isValid": False
+                 }]}
+                 continue
+
+            yield {"type": "thinking", "message": f"Validando confianza de datos para {fname}..."}
+            normalized_docs = self._normalize_results(results, fname)
+            yield {"type": "result", "data": normalized_docs}
+            
+    # keep _execute_tasks for backward compatibility if needed, but we rely on stream now
+    async def _execute_tasks(self, tasks):
+        documents = []
+        async for event in self._execute_tasks_stream(tasks):
+            if event["type"] == "result":
+                documents.extend(event["data"])
+        return documents
+
+    def _normalize_results(self, results, filename):
+        normalized = []
+        for r in results:
+            doc = {}
+            
+            source_data = r.get("fields", r)
+            
+            for k, v in source_data.items():
+                if k not in ["document_index", "document_name", "fileName", "error"]:
+                    doc[k] = v
+            
+            doc["fileName"] = filename
+            doc["isValid"] = True
+            normalized.append(doc)
+        return normalized
+
+    async def _auto_save(self, documents):
+
+        try:
+            total = len([d for d in documents if d.get("isValid", True)])
+            current = 0
+            
+            for tt in documents:
+                # Skip invalid documents
+                if not tt.get("isValid", True):
+                    continue
+                
+                fname = tt.get("fileName", "Documento")
+                yield {"type": "thinking", "message": f"Sincronizando {fname} en base de datos..."}
+
+                guia = self._build_guia(tt)
+                if not guia:
+                    continue
+                obj_req = GuiaAereaRequest.model_validate(guia)
+                self.document_facade.validar_campos_requeridos_guia_aerea(obj_req)
+                await self.document_service.saveOrUpdate(obj_req)
+                if obj_req.guiaAereaId:
+                    process_document_validations.delay(obj_req.model_dump_json())
+                
+                current += 1
+                
+            yield {"type": "thinking", "message": "Procesamiento en segundo plano iniciado para todos los documentos."}
+        
+        except Exception as e:
+            if isinstance(e, AppBaseException):
+                raise e
+            logger.error(f"Error al guardar documentos: {e}")
+            yield {"type": "thinking", "message": "Error crítico al guardar los documentos"}
+            raise AppBaseException(message=f"Error al procesar la solicitud: {e}")
+
+
+
+    def _build_guia(self, doc: dict):
+        try:
+            if doc.get("totalFlete") is None:
+                doc["totalFlete"] = 0.0
+            return GuiaAereaRequest(**doc)
+        except Exception as e:
+            logger.error(f"Error building guia object: {e}")
+            return None

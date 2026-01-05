@@ -124,17 +124,26 @@ class GuiaAereaIntervinienteServiceImpl( GuiaAereaIntervinienteService, ServiceB
         # Convert camelCase to snake_case for attribute access
         atributo_snake = re.sub(r'(?<!^)(?=[A-Z])', '_', nombre_atributo).lower()
         confianza_extraccion.valor_extraido = getattr(guia_aerea_interviniente, atributo_snake, None)
-        confianza_extraccion.confidence_modelo = confianzaRequest.confidenceModelo
+        
+        if confianzaRequest:
+            confianza_extraccion.confidence_modelo = confianzaRequest.confidenceModelo
+            confianzaRequest.intervinienteId = guia_aerea_interviniente.guia_aerea_interviniente_id
+        else:
+            confianza_extraccion.confidence_modelo = 0.0
+
         confianza_extraccion.habilitado = Constantes.HABILITADO
         confianza_extraccion.creado = DateUtil.get_current_local_datetime()
         confianza_extraccion.creado_por = Constantes.SYSTEM_USER
-        confianzaRequest.intervinienteId = guia_aerea_interviniente.guia_aerea_interviniente_id
+        
         return confianza_extraccion
 
-    def _get_confidence( self, field_name: str, confianzas: Optional[List[GuiaAereaConfianzaRequest]]) -> GuiaAereaConfianzaRequest:
+    def _get_confidence( self, field_name: str, confianzas: Optional[List[GuiaAereaConfianzaRequest]]) -> Optional[GuiaAereaConfianzaRequest]:
         target = field_name.lower().strip()
+        if not confianzas: return None
 
         for c in confianzas:
-            if c.nombreCampo.lower().strip() == target:
+            if not c: continue
+            if c.nombreCampo and c.nombreCampo.lower().strip() == target:
                 return c
+        return None
 

@@ -247,11 +247,13 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
                     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
                     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).upper()
             for tt in guia_aerea_request.confianzas:
+                if not tt: continue
                 clave_campo = camel_to_snake_upper(tt.nombreCampo.replace(".", "_"))
                 peso = getattr(Constantes.PesoCampoGuiaAerea, clave_campo, 0.0)
-                if peso > 0:
-                    suma_ponderada += tt.confidenceModelo * peso
-                    peso_total_encontrado += peso
+                if tt.valorExtraido is not None:
+                    if peso > 0:
+                        suma_ponderada += tt.confidenceModelo * peso
+                        peso_total_encontrado += peso
                 await self._guardar_confianza_valida(tt, guia_aerea)
             
             if peso_total_encontrado > 0:

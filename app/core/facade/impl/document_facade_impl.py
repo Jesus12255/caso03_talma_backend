@@ -1,12 +1,11 @@
 import json
 import logging
-from typing import List, Any
+from typing import List
 from uuid import UUID
 from app.core.services.guia_aerea_interviniente_service import GuiaAereaIntervinienteService
 from config.mapper import Mapper
 from core.tasks.document_tasks import process_document_validations
 from utl.file_util import FileUtil
-from utl.transactional_session import TransactionalSession
 
 from app.core.services.impl.document_service_impl import DocumentServiceImpl
 
@@ -34,11 +33,11 @@ class DocumentFacadeImpl(DocumentFacade):
     async def saveOrUpdate(self, files: List[UploadFile] = File(...), requestForm: str = Form(...)) -> BaseOperacionResponse:
         try:
             await self._validate_files(files)
-            request = self._validate_request(requestForm)
+            request = self.validate_request(requestForm)
 
             for tt in request:
                 obj_req = GuiaAereaRequest.model_validate(tt)
-                self._validar_campos_requeridos_guia_aerea(obj_req)
+                self.validar_campos_requeridos_guia_aerea(obj_req)
                 await self.document_service.saveOrUpdate(obj_req)
                 if obj_req.guiaAereaId:
                     process_document_validations.delay(obj_req.model_dump_json())
@@ -83,7 +82,7 @@ class DocumentFacadeImpl(DocumentFacade):
         return BaseOperacionResponse(codigo="200", mensaje="Guía aérea reprocesada correctamente.")
 
 
-    def _validar_campos_requeridos_guia_aerea(self, guia: GuiaAereaRequest):
+    def validar_campos_requeridos_guia_aerea(self, guia: GuiaAereaRequest):
 
         errores = []
 
@@ -130,7 +129,7 @@ class DocumentFacadeImpl(DocumentFacade):
         if errores:
             raise AppBaseException(message=" ".join(errores))
 
-    def _validate_request(self, requestForm: str = Form(...)) -> List[GuiaAereaRequest]:
+    def validate_request(self, requestForm: str = Form(...)) -> List[GuiaAereaRequest]:
         try:
             request = json.loads(requestForm)
             

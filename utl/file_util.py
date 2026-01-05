@@ -38,6 +38,20 @@ class FileUtil:
             return False
 
     @staticmethod
+    def is_valid_xlsx(data: bytes) -> bool:
+        try:
+            return zipfile.is_zipfile(io.BytesIO(data))
+        except Exception:
+            return False
+
+    @staticmethod
+    def is_valid_docx(data: bytes) -> bool:
+        try:
+            return zipfile.is_zipfile(io.BytesIO(data))
+        except Exception:
+            return False
+
+    @staticmethod
     async def validate_file(file: UploadFile):
         VALID_FORMATS = Constantes.VALID_FILE_FORMATS
 

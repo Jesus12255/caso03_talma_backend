@@ -16,7 +16,7 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
     task_routes={
-        "app.core.tasks.document_tasks.*": {"queue": "document_queue"},
+        "core.tasks.document_tasks.*": {"queue": "document_queue"},
     },
     broker_connection_retry_on_startup=True,
 )

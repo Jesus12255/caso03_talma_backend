@@ -11,7 +11,6 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
 
     LLM_API_KEY: str 
-    LLM_BASE_URL: str
     LLM_MODEL_NAME: str 
     DATABASE_URL: str
     REDIS_URL: str

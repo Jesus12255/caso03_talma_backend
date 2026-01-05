@@ -2,7 +2,7 @@ import asyncio
 import logging
 import json
 import redis.asyncio as redis
-from app.core.celery_app import celery_app
+from core.celery.celery_app import celery_app
 from app.core.repository.impl.guia_aerea_filtro_repository_impl import GuiaAereaFiltroRepositoryImpl
 from app.core.repository.impl.guia_aerea_interviniente_repository_impl import GuiaAereaIntervinienteRepositoryImpl
 from app.core.services.impl.guia_aerea_interviniente_service_impl import GuiaAereaIntervinienteServiceImpl
@@ -56,6 +56,6 @@ async def _process_validations_async(obj_req: str):
             doc_id = t.guiaAereaId if t else "Desconocido"
             logger.error(f"Error procesando documento {doc_id}: {e}")
 
-@celery_app.task(name="app.core.tasks.document_tasks.process_document_validations")
+@celery_app.task(name="core.tasks.document_tasks.process_document_validations")
 def process_document_validations(obj_req: str):
     asyncio.run(_process_validations_async(obj_req))

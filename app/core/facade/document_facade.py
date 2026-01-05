@@ -29,5 +29,9 @@ class DocumentFacade(ABC):
         pass
 
     @abstractmethod
-    async def updateAndReprocess(request: GuiaAereaSubsanarRequest)  -> BaseOperacionResponse:
+    def validar_campos_requeridos_guia_aerea(self, guia: GuiaAereaRequest):
+        pass
+
+    @abstractmethod
+    async def updateAndReprocess(self, request: GuiaAereaSubsanarRequest)  -> BaseOperacionResponse:
         pass
