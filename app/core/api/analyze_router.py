@@ -1,20 +1,13 @@
 from typing import List
 from fastapi import APIRouter, Depends, File, UploadFile
-from fastapi.responses import StreamingResponse
-from app.core.dependencies.dependencies_analyze import get_analyze_service
-from app.core.services.analyze_service import AnalyzeService
+from app.core.dependencies.dependencies_analyze import get_analyze_facade
+from app.core.facade.analyze_facade import AnalyzeFacade
+from dto.universal_dto import BaseOperacionResponse
+
 
 
 router = APIRouter()
 
 @router.post("/upload")
-async def upload(files: List[UploadFile] = File(...), analyze_service: AnalyzeService = Depends(get_analyze_service)):
-    files_data = []
-    for file in files:
-        content = await file.read()
-        files_data.append({"filename": file.filename, "content": content})
-    
-    async def event_stream():
-        async for token in analyze_service.upload_stream(files_data):
-            yield token
-    return StreamingResponse(event_stream(), media_type="text/event-stream")
+async def upload(files: List[UploadFile] = File(...), analyze_facade: AnalyzeFacade = Depends(get_analyze_facade)) -> BaseOperacionResponse:
+    return await analyze_facade.upload(files)

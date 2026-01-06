@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar, List, Optional, Any, Union
-from app.core.domain.baseModel import BaseModel
+from app.core.domain.base_model import BaseModel
 
 ModelType = TypeVar("ModelType", bound=BaseModel)
 
@@ -16,6 +16,10 @@ class BaseRepository(ABC, Generic[ModelType]):
 
     @abstractmethod
     async def save(self, obj_in: ModelType) -> ModelType:
+        pass
+
+    @abstractmethod
+    async def save_all(self, objs: List[ModelType]) -> List[ModelType]:
         pass
 
     @abstractmethod

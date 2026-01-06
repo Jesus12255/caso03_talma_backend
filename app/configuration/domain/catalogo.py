@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Integer
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
-from app.core.domain.baseModel import BaseModel
+from app.core.domain.base_model import BaseModel
 
 
 class Catalogo(BaseModel):

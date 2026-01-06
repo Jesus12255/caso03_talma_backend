@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Boolean, TIMESTAMP, func
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
-from app.core.domain.baseModel import Base
+from app.core.domain.base_model import Base
 
 class VwUsuario(Base):
     __tablename__ = "vw_usuario"
@@ -15,7 +15,7 @@ class VwUsuario(Base):
     correo = Column(String, nullable=True)
     celular = Column(String, nullable=True)
     token = Column(String, nullable=True)
-    fecha_expiracion_token = Column(TIMESTAMP(timezone=True), nullable=True)
+    fecha_expiracion_token = Column(TIMESTAMP(timezone=False), nullable=True)
     fecha_consulta = Column(String, nullable=True)
     tipo_documento_codigo = Column(String, nullable=True)
     tipo_documento = Column(String, nullable=True)

@@ -3,8 +3,9 @@ from app.security.domain import Usuario
 from app.security.facade.usuario_facade import UsuarioFacade
 from app.security.service.usuario_service import UsuarioService
 from config.mapper import Mapper
+from core.exceptions import AppBaseException
 from dto.universal_dto import BaseOperacionResponse, ComboBaseResponse
-from dto.usuario_dtos import UsuarioComboResponse, UsuarioRequest, UsuarioResponse, UsuarioFiltroRequest, UsuarioFiltroResponse, UsuarioStatusRequest
+from dto.usuario_dtos import UsuarioCambioPasswordRequest, UsuarioComboResponse, UsuarioRequest, UsuarioResponse, UsuarioFiltroRequest, UsuarioFiltroResponse, UsuarioStatusRequest
 from dto.collection_response import CollectionResponse
 from utl.generic_util import Constantes
 
@@ -47,3 +48,10 @@ class UsuarioFacadeImpl(UsuarioFacade):
         comboResponse.tipoDocumento = await self.comun_facade.load_by_referencia_nombre(Constantes.TIPO_DOCUMENTO)
         comboResponse.rol = await self.comun_facade.load_rol()
         return comboResponse;
+
+
+    async def updatePassword(self, request: UsuarioCambioPasswordRequest) -> BaseOperacionResponse:
+        if request.password != request.confirmarPassword:
+            return AppBaseException(codigo="400", mensaje="Las contraseñas no coinciden")
+        await self.usuario_service.updatePassword(request)
+        return BaseOperacionResponse(codigo="200", mensaje="Se cambió la contraseña correctamente")

@@ -1,17 +1,29 @@
 from typing import List
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 
-from app.core.dependencies.dependencies_document import get_document_facade
+from app.core.dependencies.dependencies_documento import get_document_facade
 from app.core.facade.document_facade import DocumentFacade
-from dto.document import DocumentRequest, DocumentResponse
+from dto.guia_aerea_dtos import GuiaAereaDataGridResponse, GuiaAereaFiltroRequest, GuiaAereaRequest, GuiaAereaResponse, GuiaAereaSubsanarRequest
+from dto.collection_response import CollectionResponse
 from dto.universal_dto import BaseOperacionResponse
 
 router = APIRouter()
 
-@router.post("/save", response_model=BaseOperacionResponse)
-async def save( requestList: List[DocumentRequest], document_facade: DocumentFacade = Depends(get_document_facade)) -> BaseOperacionResponse:
-    return await document_facade.save(requestList)
+@router.get("/get/{guia_aerea_id}", response_model=GuiaAereaResponse)
+async def get(guia_aerea_id: str, document_facade: DocumentFacade = Depends(get_document_facade)) -> GuiaAereaResponse:
+    return await document_facade.get(guia_aerea_id)
 
-@router.get("/", response_model=List[DocumentResponse])
-async def get_documents(skip: int = 0, limit: int = 10, document_facade: DocumentFacade = Depends(get_document_facade)):
-    return await document_facade.get_all_documents(skip, limit)
+@router.post("/saveOrUpdate", response_model=BaseOperacionResponse)
+async def saveOrUpdate(files: List[UploadFile] = File(...), requestForm: str = Form(...), document_facade: DocumentFacade = Depends(get_document_facade)) -> BaseOperacionResponse:
+    return await document_facade.saveOrUpdate(files, requestForm)
+
+@router.post("/find", response_model=CollectionResponse[GuiaAereaDataGridResponse])
+async def find(request: GuiaAereaFiltroRequest, document_facade: DocumentFacade = Depends(get_document_facade)):
+    return await document_facade.find(request)
+
+@router.post("/updateAndReprocess", response_model=BaseOperacionResponse)
+async def updateAndReprocess(request: GuiaAereaSubsanarRequest, document_facade: DocumentFacade = Depends(get_document_facade))  -> BaseOperacionResponse:
+    return await document_facade.updateAndReprocess(request)
+
+
+

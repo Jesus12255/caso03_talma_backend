@@ -3,7 +3,7 @@ from sqlalchemy import Column, String, Boolean, TIMESTAMP, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
-from app.core.domain.baseModel import BaseModel
+from app.core.domain.base_model import BaseModel
 
 
 

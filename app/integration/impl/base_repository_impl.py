@@ -41,6 +41,14 @@ class BaseRepositoryImpl(BaseRepository[ModelType]):
         await self.db.refresh(obj_in)
         return obj_in
 
+    async def save_all(self, objs: List[ModelType]) -> List[ModelType]:
+        self.db.add_all(objs)
+        await self.db.commit()
+        # Opcional: Refresh si se necesitan los IDs generados
+        # for obj in objs:
+        #     await self.db.refresh(obj)
+        return objs
+
     async def update(self, id: Any, obj_in: Union[dict, ModelType]) -> Optional[ModelType]:
         db_obj = await self.get_by_id(id)
         if not db_obj:

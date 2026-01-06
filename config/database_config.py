@@ -5,14 +5,19 @@ from config.config import settings
 
 DATABASE_URL = settings.DATABASE_URL
 
+from sqlalchemy.pool import NullPool
+
 engine = create_async_engine(
     DATABASE_URL,
     echo=False,
-    pool_pre_ping=True,
-    pool_recycle=1800,
-    pool_size=10,
-    max_overflow=20,
-    connect_args={"statement_cache_size": 0}
+    poolclass=NullPool,
+    connect_args={
+        "server_settings": {
+            "jit": "off"
+        },
+        "prepared_statement_cache_size": 0,
+        "statement_cache_size": 0
+    }
 )
 
 AsyncSessionLocal = sessionmaker(
