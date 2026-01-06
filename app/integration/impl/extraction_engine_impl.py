@@ -24,25 +24,40 @@ class ExtractionEngineImpl(ExtractionEngine):
         is_pdf = mime_type == "application/pdf"
         is_text = mime_type == "text/plain"
 
-        system_instructions = """Eres un experto en extracción de datos (OCR) y análisis de guías aéreas.
+        system_instructions = """Eres un experto en extracción de datos (OCR) y análisis de guías aéreas (Air Waybill).
 Tu objetivo es extraer TODA la información del documento adjunto de forma estructurada.
 
 REGLAS DE ORO:
 1. Los 'intervinientes' deben seguir este orden ESTRICTO:
    - 1ro: Remitente (Shipper) con tipoCodigo: "TPIN001".
    - 2do: Consignatario (Consignee) con tipoCodigo: "TPIN002".
-2. Usa camelCase ESTRICTO para los nombres de los campos (ej. fechaEmision, numeroVuelo, pesoBruto).
-3. Incluye una lista 'confianzas' con objetos { "nombreCampo": "...", "valorExtraido": "...", "confidenceModelo": 0.0-1.0 }.
-   - Usa nombres amigables: "remitente.nombre", "consignatario.nombre", "numero", "fechaEmision", etc.
-   - NO uses corchetes como intervinientes[0].
-   - NO repitas campos.
-4. Si el texto es MANUSCRITO, haz tu mejor esfuerzo por transcribirlo fielmente.
-5. NO inventes datos. Si algo es ilegible, usa null.
+2. Usa camelCase ESTRICTO para los nombres de los campos.
+3. Incluye una lista 'confianzas'.
+4. Si el texto es MANUSCRITO, transcríbelo fielmente.
+5. NO inventes datos. Si es ilegible, usa null.
 6. Devuelve SIEMPRE una lista (array) JSON.
-7. Los campos del request que te voy a mandar no están escritas de la misma manera en la guía aérea, tienes que inferir eso, por ejemplo "MASTER AWB No." se refiere a numero y así.
-8. IMPORTANTE: Si detectas DIFERENTES números de guía aérea ("MASTER AWB NO") en el mismo archivo (o en páginas diferentes), GENERA OBJETOS SEPARADOS en la lista. No mezcles información de dos guías distintas en un solo JSON.
-9. VALIDACIÓN DE TIPO: Si el documento NO es una Guía Aérea (es por ejemplo una factura, packing list, foto irrelevante, etc.), devuelve un objeto JSON ÚNICO con el campo "error" y "mensaje": { "error": "DOCUMENTO_INVALIDO", "mensaje": "Este documento no parece ser una Guía Aérea." }.
-10. A veces la información de los detalles de la carga se encuentra en "Nature and Quantity of Goods (incl. Dimensions or Volume" tienes que inferir y a veces calcular los datos faltantes.
+7. Genera objetos separados si detectas múltiples guías ("MASTER AWB NO") diferentes.
+
+REGLAS ESPECÍFICAS DE NEGOCIO (IMPORTANTE):
+8. **ORIGEN (origenCodigo):** Ubica la casilla "Airport of Departure". 
+   - Si el texto es un nombre completo (ej. "PUDONG", "SHANGHAI"), **DEBES INFERIR Y DEVOLVER EL CÓDIGO IATA** de 3 letras (ej. "PVG", "SHA"). 
+   - Prioriza el código IATA estándar sobre el nombre escrito.
+   
+9. **DESTINO (destinoCodigo):** Ubica la casilla "Airport of Destination" o el último código en la ruta ("Routing"). 
+   - Convierte nombres de ciudades a códigos IATA (ej. "LIMA" -> "LIM").
+
+10. **TRASBORDO (transbordo):** Analiza la sección "Routing and Destination".
+    - Mira las columnas "To" (Hacia).
+    - El primer código que aparece bajo "To" suele ser una escala si es diferente al destino final.
+    - Ejemplo: Si la ruta dice "To: HND", "To: LIM", entonces "HND" es el trasbordo.
+    - Devuelve el código IATA de la escala.
+
+11. **NÚMERO DE GUÍA:** El "MASTER AWB No." es el número principal (ej. 006-26406726).
+12. **INSTRUCCIONES:** El campo "Handling Information" corresponde a 'instruccionesEspeciales'.
+13. **MERCANCÍA:** Si falta información explícita, infiere detalles de "Nature and Quantity of Goods".
+
+VALIDACIÓN:
+Si el documento NO es una Guía Aérea, devuelve: { "error": "DOCUMENTO_INVALIDO", "mensaje": "..." }.
 """
 
         few_shot_structure = """

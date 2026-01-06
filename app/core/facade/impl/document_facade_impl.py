@@ -103,28 +103,35 @@ class DocumentFacadeImpl(DocumentFacade):
                 errores.append("Falta información del consignatario.")
 
         if not guia.origenCodigo:
-            errores.append("El aeropuerto de origen es obligatorio.")
+            # errores.append("El aeropuerto de origen es obligatorio.")
+            pass
 
         if not guia.destinoCodigo:
-            errores.append("El aeropuerto de destino es obligatorio.")
+            # errores.append("El aeropuerto de destino es obligatorio.")
+            pass
 
         if guia.cantidadPiezas is None or guia.cantidadPiezas < 1:
             errores.append("La cantidad de piezas debe ser mayor a cero.")
 
         if not guia.descripcionMercancia:
-            errores.append("La descripción de la mercadería es obligatoria.")
+            # errores.append("La descripción de la mercadería es obligatoria.")
+            pass
 
         if guia.pesoBruto is None or guia.pesoBruto <= 0:
-            errores.append("El peso bruto debe ser mayor a cero.")
+            # errores.append("El peso bruto debe ser mayor a cero.")
+            pass
 
         if not guia.tipoFleteCodigo:
-            errores.append("El tipo de flete es obligatorio.")
+            # errores.append("El tipo de flete es obligatorio.")
+            pass
 
         if not guia.monedaCodigo:
-            errores.append("La moneda es obligatoria.")
+            # errores.append("La moneda es obligatoria.")
+            pass
 
         if guia.fechaEmision is None:
-            errores.append("La fecha de emisión de la guía es obligatoria.")
+            # errores.append("La fecha de emisión de la guía es obligatoria.")
+            pass
 
         if errores:
             raise AppBaseException(message=" ".join(errores))

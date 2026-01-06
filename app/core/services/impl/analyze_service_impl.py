@@ -236,11 +236,10 @@ class AnalyzeServiceImpl(AnalyzeService):
             yield {"type": "thinking", "message": "Procesamiento en segundo plano iniciado para todos los documentos."}
         
         except Exception as e:
-            if isinstance(e, AppBaseException):
-                raise e
             logger.error(f"Error al guardar documentos: {e}")
-            yield {"type": "thinking", "message": "Error crítico al guardar los documentos"}
-            raise AppBaseException(message=f"Error al procesar la solicitud: {e}")
+            yield {"type": "warning", "message": f"Error al guardar datos: {e}"}
+            # Don't raise, so other docs can be processed or stream finishes gracefully
+            # raise AppBaseException(message=f"Error al procesar la solicitud: {e}")
 
 
 
