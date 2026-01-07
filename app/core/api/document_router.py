@@ -1,9 +1,10 @@
 from typing import List
 from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi.responses import StreamingResponse
 
 from app.core.dependencies.dependencies_documento import get_document_facade
 from app.core.facade.document_facade import DocumentFacade
-from dto.guia_aerea_dtos import GuiaAereaDataGridResponse, GuiaAereaFiltroRequest, GuiaAereaRequest, GuiaAereaResponse, GuiaAereaSubsanarRequest
+from dto.guia_aerea_dtos import DescargarGuiaAereaRequest, GuiaAereaDataGridResponse, GuiaAereaFiltroRequest, GuiaAereaRequest, GuiaAereaResponse, GuiaAereaSubsanarRequest
 from dto.collection_response import CollectionResponse
 from dto.universal_dto import BaseOperacionResponse
 
@@ -25,5 +26,7 @@ async def find(request: GuiaAereaFiltroRequest, document_facade: DocumentFacade 
 async def updateAndReprocess(request: GuiaAereaSubsanarRequest, document_facade: DocumentFacade = Depends(get_document_facade))  -> BaseOperacionResponse:
     return await document_facade.updateAndReprocess(request)
 
-
+@router.post("/descargarGuiaAerea")
+async def descargarGuiaAerea(request: DescargarGuiaAereaRequest, document_facade: DocumentFacade = Depends(get_document_facade)) -> StreamingResponse:
+    return await document_facade.descargarGuiaAerea(request)
 

@@ -7,14 +7,16 @@ from config.mapper import Mapper
 from core.tasks.document_tasks import process_document_validations
 from utl.file_util import FileUtil
 
+from app.integration.service.storage_service import StorageService
 from app.core.services.impl.document_service_impl import DocumentServiceImpl
 
 from fastapi import Form, UploadFile
 from fastapi.params import File
+from fastapi.responses import StreamingResponse
 from app.core.facade.document_facade import DocumentFacade
 from app.core.services.document_service import DocumentService
 from core.exceptions import AppBaseException
-from dto.guia_aerea_dtos import GuiaAereaComboResponse, GuiaAereaDataGridResponse, GuiaAereaFiltroRequest, GuiaAereaIntervinienteResponse, GuiaAereaRequest, GuiaAereaResponse, GuiaAereaSubsanarRequest
+from dto.guia_aerea_dtos import DescargarGuiaAereaRequest, GuiaAereaComboResponse, GuiaAereaDataGridResponse, GuiaAereaFiltroRequest, GuiaAereaIntervinienteResponse, GuiaAereaRequest, GuiaAereaResponse, GuiaAereaSubsanarRequest
 from dto.collection_response import CollectionResponse
 from dto.universal_dto import BaseOperacionResponse
 from utl.generic_util import GenericUtil
@@ -25,9 +27,10 @@ logger = logging.getLogger(__name__)
 
 class DocumentFacadeImpl(DocumentFacade):
 
-    def __init__(self, document_service: DocumentService, guia_aerea_interviniente_service: GuiaAereaIntervinienteService):
+    def __init__(self, document_service: DocumentService, guia_aerea_interviniente_service: GuiaAereaIntervinienteService, storage_service: StorageService):
         self.document_service = document_service
         self.guia_aerea_interviniente_service = guia_aerea_interviniente_service
+        self.storage_service = storage_service
 
 
     async def saveOrUpdate(self, files: List[UploadFile] = File(...), requestForm: str = Form(...)) -> BaseOperacionResponse:
@@ -156,6 +159,21 @@ class DocumentFacadeImpl(DocumentFacade):
         # TODO: Implement real logic. For now return empty or basic structure
         # If there are catalogs to load, call services here.
         return GuiaAereaComboResponse()
+
+
+    async def descargarGuiaAerea(self, request: DescargarGuiaAereaRequest) -> StreamingResponse:
+        if not request.url:
+            raise AppBaseException(message="La URL del archivo es requerida.")
+        
+        stream_generator = self.storage_service.download_file_stream(request.url)
+        
+        filename = request.url.split("/")[-1] if request.url else "archivo"
+        
+        return StreamingResponse(
+            stream_generator, 
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        )
 
 
         

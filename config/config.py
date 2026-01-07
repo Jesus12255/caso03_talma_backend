@@ -16,6 +16,11 @@ class Settings(BaseSettings):
     REDIS_URL: str
     PASWORD_INICIAL: str
     
+    GCS_BUCKET_NAME: str 
+    GCP_PROJECT_ID: str
+    GCP_CLIENT_EMAIL: str
+    GCP_PRIVATE_KEY: str
+    
     
     SECRET_KEY: str = secrets.token_hex(32)
     ALGORITHM: str = "HS256"

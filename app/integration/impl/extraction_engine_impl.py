@@ -32,29 +32,40 @@ REGLAS DE ORO:
    - 1ro: Remitente (Shipper) con tipoCodigo: "TPIN001".
    - 2do: Consignatario (Consignee) con tipoCodigo: "TPIN002".
 2. Usa camelCase ESTRICTO para los nombres de los campos.
-3. Incluye una lista 'confianzas'.
+3. Incluye una lista 'confianzas'. CRITERIO: Si el texto es claro, confianza >= 0.95. Solo si es borroso/ambiguo baja de 0.95.
 4. Si el texto es MANUSCRITO, transcríbelo fielmente.
 5. NO inventes datos. Si es ilegible, usa null.
 6. Devuelve SIEMPRE una lista (array) JSON.
 7. Genera objetos separados si detectas múltiples guías ("MASTER AWB NO") diferentes.
 
+ESTRATEGIA DE INFERENCIA PARA DATOS SIN ETIQUETAS (CRÍTICO):
+A menudo, las guías no tienen títulos de campo ("Shipper", "Consignee", "Weight"), solo valores en posiciones estándar.
+Usa tu conocimiento del formato IATA Air Waybill para inferir qué es cada dato:
+- **Aeropuertos**: Si ves códigos de 3 letras (ej. LIM, MIA, MAD) aislados, el primero/izquierdo suele ser ORIGEN y el segundo/derecho DESTINO.
+- **Participantes**:
+    - El bloque de texto en la esquina superior izquierda es siempre el REMITENTE (Shipper).
+    - El bloque de texto justo debajo del remitente es el CONSIGNATARIO (Consignee).
+- **Valores Numéricos**:
+    - Enteros pequeños (1-1000) a la izquierda de un peso suelen ser "cantidadPiezas".
+    - Números con decimales seguidos de "K", "KG", "L", "LB" son "pesoBruto".
+    - Valores monetarios (decimales) en columnas alineadas a la derecha suelen ser "totalFlete" o cargos.
+- **Códigos**: 
+    - "PP" o "CC" aislados indican "tipoFleteCodigo" (Prepaid/Collect).
+    - Códigos de 3 letras bajo columnas de "Routing" son Escalas/Trasbordos.
+
 REGLAS ESPECÍFICAS DE NEGOCIO (IMPORTANTE):
-8. **ORIGEN (origenCodigo):** Ubica la casilla "Airport of Departure". 
-   - Si el texto es un nombre completo (ej. "PUDONG", "SHANGHAI"), **DEBES INFERIR Y DEVOLVER EL CÓDIGO IATA** de 3 letras (ej. "PVG", "SHA"). 
-   - Prioriza el código IATA estándar sobre el nombre escrito.
+8. **ORIGEN (origenCodigo):** Busca "Airport of Departure" o el primer código IATA (3 letras) lógico.
+   - Si es nombre completo (ej. "SHANGHAI"), **DEBES INFERIR EL CÓDIGO IATA** (ej. "SHA").
    
-9. **DESTINO (destinoCodigo):** Ubica la casilla "Airport of Destination" o el último código en la ruta ("Routing"). 
+9. **DESTINO (destinoCodigo):** Busca "Airport of Destination" o el código IATA final.
    - Convierte nombres de ciudades a códigos IATA (ej. "LIMA" -> "LIM").
 
-10. **TRASBORDO (transbordo):** Analiza la sección "Routing and Destination".
-    - Mira las columnas "To" (Hacia).
-    - El primer código que aparece bajo "To" suele ser una escala si es diferente al destino final.
-    - Ejemplo: Si la ruta dice "To: HND", "To: LIM", entonces "HND" es el trasbordo.
-    - Devuelve el código IATA de la escala.
+10. **TRASBORDO (transbordo):** Analiza ruta ("Routing").
+    - Primer código IATA bajo "To" diferente al destino final.
 
-11. **NÚMERO DE GUÍA:** El "MASTER AWB No." es el número principal (ej. 006-26406726).
-12. **INSTRUCCIONES:** El campo "Handling Information" corresponde a 'instruccionesEspeciales'.
-13. **MERCANCÍA:** Si falta información explícita, infiere detalles de "Nature and Quantity of Goods".
+11. **NÚMERO DE GUÍA:** Busca formato XXX-XXXXXXXX (ej. 006-26406726) en encabezados.
+12. **INSTRUCCIONES:** "Handling Information" o texto libre con instrucciones.
+13. **MERCANCÍA:** "Nature and Quantity of Goods" o descripción principal de la carga.
 
 VALIDACIÓN:
 Si el documento NO es una Guía Aérea, devuelve: { "error": "DOCUMENTO_INVALIDO", "mensaje": "..." }.

@@ -2,8 +2,10 @@ from abc import ABC, abstractmethod
 from typing import List, Any
 from uuid import UUID
 from fastapi import File, Form, UploadFile
-from dto.guia_aerea_dtos import GuiaAereaComboResponse,  GuiaAereaFiltroRequest, GuiaAereaRequest, GuiaAereaResponse, GuiaAereaSubsanarRequest
+from fastapi.responses import StreamingResponse
+from dto.guia_aerea_dtos import DescargarGuiaAereaRequest, GuiaAereaComboResponse,  GuiaAereaFiltroRequest, GuiaAereaRequest, GuiaAereaResponse, GuiaAereaSubsanarRequest
 from dto.universal_dto import BaseOperacionResponse
+
 
 
 class DocumentFacade(ABC):
@@ -34,4 +36,8 @@ class DocumentFacade(ABC):
 
     @abstractmethod
     async def updateAndReprocess(self, request: GuiaAereaSubsanarRequest)  -> BaseOperacionResponse:
+        pass
+
+    @abstractmethod
+    async def descargarGuiaAerea(self, request: DescargarGuiaAereaRequest) -> StreamingResponse:
         pass

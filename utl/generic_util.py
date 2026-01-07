@@ -1,6 +1,7 @@
 from typing import Any, Collection, Dict, Callable, TypeVar
 from datetime import datetime
-from utl.date_util import DateUtil
+from utl.date_util import DateUtil, FORMAT02
+
 import random
 import base64
 from threading import Lock
@@ -96,9 +97,9 @@ class GenericUtil:
     # =========================
     @staticmethod
     def build_code_8_unic() -> str:
-        fecha = DateUtil.format(
+        fecha = DateUtil.format_datetime(
             DateUtil.get_current_local_datetime(),
-            DateUtil.FORMAT02
+            FORMAT02
         )
         parte_fecha = fecha[-4:]
         numero_aleatorio = random.randint(1000, 9999)
