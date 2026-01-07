@@ -55,3 +55,4 @@ class GuiaAereaDataGrid(Base):
     estado_registro = Column(String)
     habilitado = Column(Boolean)
     fecha_consulta = Column(TIMESTAMP(timezone=False))
+    url = Column(String)

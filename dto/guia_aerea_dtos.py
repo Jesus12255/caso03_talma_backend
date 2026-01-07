@@ -16,6 +16,10 @@ class DatoRequest(BaseModel):
     label: str
     value: str
     
+class DescargarGuiaAereaRequest(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    url: Optional[str] = None
+
     
 class GuiaAereaRequest(BaseModel):
 
@@ -59,6 +63,7 @@ class GuiaAereaRequest(BaseModel):
     instruccionesEspeciales: Optional[str] = None
     observaciones: Optional[str] = None
     estadoRegistroCodigo: Optional[str] = Field(default=None, max_length=40)
+    url: Optional[str] = None
 
     confianzas: Optional[List[GuiaAereaConfianzaRequest]] = Field(
         default=None,
@@ -256,6 +261,7 @@ class GuiaAereaDataGridResponse(BaseModel):
     estadoRegistro: Optional[str] = None
     habilitado: Optional[bool] = None
     fechaConsulta: Optional[datetime] = None
+    url: Optional[str] = None
 
 
 class GuiaAereaFiltroRequest(BaseRequest):

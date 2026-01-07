@@ -61,6 +61,9 @@ class Constantes:
     ZONA_CODIGO = "Z"
     NIVEL_CODIGO = "N"
 
+    class RutasArchivos:
+        GUIAS_AEREAS = "guiasAereas/"
+
 
     class PesoCampoGuiaAerea:
         # =========================

@@ -1,7 +1,9 @@
 
 
+
 from pydoc import doc
 from typing import List, Any
+
 from app.core.domain.confianza_extraccion import ConfianzaExtraccion
 from app.core.domain.guia_aerea import  GuiaAerea
 from app.core.domain.guia_aerea_interviniente import GuiaAereaInterviniente
@@ -311,3 +313,4 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
             doc.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.OBSERVADO
             obs = " Formato de número de guía inválido (No cumple formato MAWB: XXX-XXXXXXXX). "
             doc.observaciones = (doc.observaciones or "") + obs
+

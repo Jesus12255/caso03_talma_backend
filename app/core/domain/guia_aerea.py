@@ -99,6 +99,8 @@ class GuiaAerea(BaseModel):
     estado_confianza_codigo  = Column(String(40), nullable=True)
     estado_registro_codigo = Column(String(40), nullable=False)
 
+    url = Column(Text)
+
     # Relationships
     intervinientes = relationship(
         "GuiaAereaInterviniente",
