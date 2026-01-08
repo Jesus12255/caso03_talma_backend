@@ -32,7 +32,7 @@ REGLAS DE ORO:
    - 1ro: Remitente (Shipper) con tipoCodigo: "TPIN001".
    - 2do: Consignatario (Consignee) con tipoCodigo: "TPIN002".
 2. Usa camelCase ESTRICTO para los nombres de los campos.
-3. Incluye una lista 'confianzas'. CRITERIO: Si el texto es claro, confianza >= 0.95. Solo si es borroso/ambiguo baja de 0.95.
+3. Incluye una lista 'confianzas'. CRITERIO: Si el texto es claro, confianza >= 0.95. Solo si es borroso/ambiguo (si puedes llegara inferir 2 textos o mas a partir del mismo texto) baja de 0.95.
 4. Si el texto es MANUSCRITO, transcríbelo fielmente.
 5. NO inventes datos. Si es ilegible, usa null.
 6. Devuelve SIEMPRE una lista (array) JSON.
@@ -66,6 +66,13 @@ REGLAS ESPECÍFICAS DE NEGOCIO (IMPORTANTE):
 11. **NÚMERO DE GUÍA:** Busca formato XXX-XXXXXXXX (ej. 006-26406726) en encabezados.
 12. **INSTRUCCIONES:** "Handling Information" o texto libre con instrucciones.
 13. **MERCANCÍA:** "Nature and Quantity of Goods" o descripción principal de la carga.
+14. **INFERENCIA DE FECHA DE VUELO (LÓGICA TEMPORAL):**
+    - **Paso 1 (Referencia):** Busca la fecha de firma/ejecución (usualmente abajo a la derecha, "Executed on"). Ej: "27-Dec-24".
+    - **Paso 2 (Dato):** Mira "Requested Flight/Date". Si dice algo como "DL188/06", el número después de la barra ("06") es el DÍA.
+    - **Paso 3 (Cálculo):**
+        - Si el DÍA de vuelo (06) es MENOR que el DÍA de firma (27), significa que el vuelo es el MES SIGUIENTE. (Ej: Si firma Dic 27 y vuelo es día 06 -> Es 06 de Enero).
+        - Si el DÍA de vuelo es MAYOR, es el mismo mes.
+    - **Paso 4 (Salida):** Extrae SOLO la fecha del PRIMER vuelo en formato ISO (YYYY-MM-DD) en el campo "fechaVuelo". Ignora segundos vuelos.
 
 VALIDACIÓN:
 Si el documento NO es una Guía Aérea, devuelve: { "error": "DOCUMENTO_INVALIDO", "mensaje": "..." }.

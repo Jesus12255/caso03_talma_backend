@@ -3,6 +3,7 @@
 
 from pydoc import doc
 from typing import List, Any
+from uuid import UUID
 
 from app.core.domain.confianza_extraccion import ConfianzaExtraccion
 from app.core.domain.guia_aerea import  GuiaAerea
@@ -313,4 +314,14 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
             doc.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.OBSERVADO
             obs = " Formato de número de guía inválido (No cumple formato MAWB: XXX-XXXXXXXX). "
             doc.observaciones = (doc.observaciones or "") + obs
+
+    async def delete(self, guia_aerea_id: UUID):
+        guia_aerea = await self.get(str(guia_aerea_id))
+        if Constantes.HABILITADO == guia_aerea.habilitado:
+            guia_aerea.habilitado = Constantes.INHABILITADO
+        else:
+            guia_aerea.habilitado = Constantes.HABILITADO
+        guia_aerea.modificado = DateUtil.get_current_local_datetime()
+        guia_aerea.modificado_por = self.session.full_name
+        await self.document_repository.save(guia_aerea)
 

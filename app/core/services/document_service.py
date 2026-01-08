@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any
+from uuid import UUID
 from app.core.domain.guia_aerea import GuiaAerea
 from dto.guia_aerea_dtos import  GuiaAereaFiltroRequest, GuiaAereaRequest, GuiaAereaSubsanarRequest
 
@@ -28,4 +29,8 @@ class DocumentService(ABC):
 
     @abstractmethod
     async def updateAndReprocess(self, request: GuiaAereaSubsanarRequest):
+        pass
+
+    @abstractmethod
+    async def delete(self, guia_aerea_id: UUID) -> bool:
         pass

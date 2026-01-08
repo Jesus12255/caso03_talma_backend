@@ -233,6 +233,13 @@ class AnalyzeServiceImpl(AnalyzeService):
     def _build_guia(self, doc: dict) -> Optional[GuiaAereaRequest]:
         try:
             doc.setdefault("totalFlete", 0.0)
+            
+            # Fix types for Pydantic validation
+            if "confianzas" in doc and isinstance(doc["confianzas"], list):
+                for c in doc["confianzas"]:
+                    if "valorExtraido" in c and c["valorExtraido"] is not None:
+                         c["valorExtraido"] = str(c["valorExtraido"])
+            
             return GuiaAereaRequest(**doc)
         except Exception as exc:
             logger.error("Error building guia: %s", exc)
