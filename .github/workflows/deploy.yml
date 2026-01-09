@@ -76,9 +76,10 @@ jobs:
                   region: ${{ env.REGION }}
                   # --command and --args must be passed via flags for the Action
                   # Note: args are comma-separated in gcloud
-                  # Use = for flags to ensure proper parsing, and escape the comma in the queue list
-                  flags: '--command=celery --args=-A,core.celery.celery_app.celery_app,worker,--loglevel=info,--pool=threads,--concurrency=20,-Q,document_queue\,celery --no-cpu-throttling --min-instances=1'
+                  # No command overrides needed now; we use SERVICE_TYPE env var to switch behavior
+                  flags: "--no-cpu-throttling --min-instances=1"
                   env_vars: |
+                      SERVICE_TYPE=worker
                       DATABASE_URL=${{ secrets.DATABASE_URL }}
                       LLM_API_KEY=${{ secrets.LLM_API_KEY }}
                       LLM_MODEL_NAME=${{ secrets.LLM_MODEL_NAME }}
