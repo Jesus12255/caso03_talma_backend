@@ -205,6 +205,8 @@ class AnalyzeServiceImpl(AnalyzeService):
         documents: List[dict]
     ) -> AsyncGenerator[dict, None]:
 
+        seen_numeros = set()
+
         for doc in filter(lambda d: d.get("isValid", True), documents):
             fname = doc.get("fileName", "Documento")
             yield self._thinking(f"Sincronizando {fname} en base de datos...")
@@ -212,6 +214,14 @@ class AnalyzeServiceImpl(AnalyzeService):
             guia = self._build_guia(doc)
             if not guia:
                 continue
+
+            # Batch deduplication
+            if guia.numero and guia.numero in seen_numeros:
+                yield self._warning(f"Omitiendo duplicado en lote: {guia.numero}")
+                continue
+            
+            if guia.numero:
+                seen_numeros.add(guia.numero)
 
             self.document_facade.validar_campos_requeridos_guia_aerea(guia)
             await self.document_service.saveOrUpdate(guia)
@@ -233,6 +243,13 @@ class AnalyzeServiceImpl(AnalyzeService):
     def _build_guia(self, doc: dict) -> Optional[GuiaAereaRequest]:
         try:
             doc.setdefault("totalFlete", 0.0)
+            
+            # Fix types for Pydantic validation
+            if "confianzas" in doc and isinstance(doc["confianzas"], list):
+                for c in doc["confianzas"]:
+                    if "valorExtraido" in c and c["valorExtraido"] is not None:
+                         c["valorExtraido"] = str(c["valorExtraido"])
+            
             return GuiaAereaRequest(**doc)
         except Exception as exc:
             logger.error("Error building guia: %s", exc)

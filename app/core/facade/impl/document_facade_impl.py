@@ -6,10 +6,7 @@ from app.core.services.guia_aerea_interviniente_service import GuiaAereaIntervin
 from config.mapper import Mapper
 from core.tasks.document_tasks import process_document_validations
 from utl.file_util import FileUtil
-
 from app.integration.service.storage_service import StorageService
-from app.core.services.impl.document_service_impl import DocumentServiceImpl
-
 from fastapi import Form, UploadFile
 from fastapi.params import File
 from fastapi.responses import StreamingResponse
@@ -20,7 +17,7 @@ from dto.guia_aerea_dtos import DescargarGuiaAereaRequest, GuiaAereaComboRespons
 from dto.collection_response import CollectionResponse
 from dto.universal_dto import BaseOperacionResponse
 from utl.generic_util import GenericUtil
-import re
+
 
 
 logger = logging.getLogger(__name__)
@@ -174,6 +171,10 @@ class DocumentFacadeImpl(DocumentFacade):
             media_type="application/octet-stream",
             headers={"Content-Disposition": f'attachment; filename="{filename}"'}
         )
+
+    async def delete(self, guia_aerea_id: UUID) -> BaseOperacionResponse:
+        await self.document_service.delete(guia_aerea_id)
+        return BaseOperacionResponse(codigo="200", mensaje="Registro eliminado correctamente.")
 
 
         

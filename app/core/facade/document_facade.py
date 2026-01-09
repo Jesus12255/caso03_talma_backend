@@ -41,3 +41,7 @@ class DocumentFacade(ABC):
     @abstractmethod
     async def descargarGuiaAerea(self, request: DescargarGuiaAereaRequest) -> StreamingResponse:
         pass
+
+    @abstractmethod
+    async def delete(self, guia_aerea_id: UUID) -> BaseOperacionResponse:
+        pass

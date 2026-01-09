@@ -6,7 +6,7 @@ from sqlalchemy.orm import  relationship
 
 
 class Interviniente(BaseModel):
-    __tablename__ = "interviniente"
+    __tablename__ = "interviniente1"
 
     interviniente_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
