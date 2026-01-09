@@ -1,0 +1,93 @@
+name: Deploy Backend & Worker to Cloud Run
+
+on:
+    push:
+        branches:
+            - main
+
+env:
+    PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+    REGION: us-central1
+    BACKEND_IMAGE: gcr.io/${{ secrets.GCP_PROJECT_ID }}/talma-backend:${{ github.sha }}
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: "read"
+            id-token: "write"
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            # Authenticate to Google Cloud using Service Account Key JSON
+            - name: Google Auth
+              id: auth
+              uses: google-github-actions/auth@v2
+              with:
+                  credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+            # Set up Cloud SDK
+            - name: Set up Cloud SDK
+              uses: google-github-actions/setup-gcloud@v2
+
+            # Configure Docker to use gcloud as a credential helper
+            - name: Configure Docker
+              run: |
+                  gcloud auth configure-docker
+
+            # Build and Push Container Image
+            - name: Build and Push
+              run: |
+                  docker build -t ${{ env.BACKEND_IMAGE }} .
+                  docker push ${{ env.BACKEND_IMAGE }}
+
+            # Deploy Backend API Service
+            - name: Deploy Backend Service
+              uses: google-github-actions/deploy-cloudrun@v2
+              with:
+                  service: talma-backend
+                  image: ${{ env.BACKEND_IMAGE }}
+                  region: ${{ env.REGION }}
+                  flags: "--port 8000 --allow-unauthenticated"
+                  env_vars: |
+                      DATABASE_URL=${{ secrets.DATABASE_URL }}
+                      LLM_API_KEY=${{ secrets.LLM_API_KEY }}
+                      LLM_MODEL_NAME=${{ secrets.LLM_MODEL_NAME }}
+                      PASWORD_INICIAL=${{ secrets.PASWORD_INICIAL }}
+                      SMTP_HOST=${{ secrets.SMTP_HOST }}
+                      SMTP_PORT=${{ secrets.SMTP_PORT }}
+                      SMTP_USER=${{ secrets.SMTP_USER }}
+                      SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
+                      REDIS_URL=${{ secrets.REDIS_URL }}
+                      GCS_BUCKET_NAME=${{ secrets.GCS_BUCKET_NAME }}
+                      GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}
+                      GCP_CLIENT_EMAIL=${{ secrets.GCP_CLIENT_EMAIL }}
+                      GCP_PRIVATE_KEY=${{ secrets.GCP_PRIVATE_KEY }}
+
+            # Deploy Celery Worker Service
+            # Note: Workers should have --no-cpu-throttling to run effectively for background tasks
+            - name: Deploy Worker Service
+              uses: google-github-actions/deploy-cloudrun@v2
+              with:
+                  service: talma-worker
+                  image: ${{ env.BACKEND_IMAGE }}
+                  region: ${{ env.REGION }}
+                  # --command and --args must be passed via flags for the Action
+                  # Note: args are comma-separated in gcloud
+                  flags: "--command celery --args -A,core.celery.celery_app.celery_app,worker,--loglevel=info,--pool=threads,--concurrency=20,-Q,document_queue,celery --no-cpu-throttling --min-instances 1"
+                  env_vars: |
+                      DATABASE_URL=${{ secrets.DATABASE_URL }}
+                      LLM_API_KEY=${{ secrets.LLM_API_KEY }}
+                      LLM_MODEL_NAME=${{ secrets.LLM_MODEL_NAME }}
+                      PASWORD_INICIAL=${{ secrets.PASWORD_INICIAL }}
+                      SMTP_HOST=${{ secrets.SMTP_HOST }}
+                      SMTP_PORT=${{ secrets.SMTP_PORT }}
+                      SMTP_USER=${{ secrets.SMTP_USER }}
+                      SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
+                      REDIS_URL=${{ secrets.REDIS_URL }}
+                      GCS_BUCKET_NAME=${{ secrets.GCS_BUCKET_NAME }}
+                      GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}
+                      GCP_CLIENT_EMAIL=${{ secrets.GCP_CLIENT_EMAIL }}
+                      GCP_PRIVATE_KEY=${{ secrets.GCP_PRIVATE_KEY }}
