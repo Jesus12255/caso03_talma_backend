@@ -35,7 +35,7 @@ jobs:
             # Configure Docker to use gcloud as a credential helper
             - name: Configure Docker
               run: |
-                  gcloud auth configure-docker
+                  gcloud auth configure-docker us-central1-docker.pkg.dev
 
             # Build and Push Container Image
             - name: Build and Push
