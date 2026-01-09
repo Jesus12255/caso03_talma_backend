@@ -8,7 +8,7 @@ on:
 env:
     PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
     REGION: us-central1
-    BACKEND_IMAGE: gcr.io/${{ secrets.GCP_PROJECT_ID }}/talma-backend:${{ github.sha }}
+    BACKEND_IMAGE: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cu-03-documentos/backend:${{ github.sha }}
 
 jobs:
     deploy:
