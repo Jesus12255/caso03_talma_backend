@@ -1,8 +1,5 @@
 
-
-
-from pydoc import doc
-from typing import List, Any
+from typing import List
 from uuid import UUID
 
 from app.core.domain.confianza_extraccion import ConfianzaExtraccion
@@ -24,7 +21,11 @@ from dto.guia_aerea_dtos import  GuiaAereaFiltroRequest, GuiaAereaRequest, GuiaA
 from utl.constantes import Constantes
 from utl.date_util import DateUtil
 import re
-from sqlalchemy import or_, and_, select
+from sqlalchemy import or_, and_
+import logging
+from core.realtime.publisher import publish_document_update
+
+logger = logging.getLogger(__name__)
 
 class DocumentServiceImpl(DocumentService, ServiceBase):
 
@@ -44,6 +45,9 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         documento.creado_por = self.session.full_name
         documento.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.PROCESANDO
         await self.document_repository.save(documento)
+        t.guiaAereaId = documento.guia_aerea_id
+        
+        await publish_document_update("INFO", f"Documento N°{documento.numero} guardado, procesando información adicional", documento.guia_aerea_id)
         t.guiaAereaId = documento.guia_aerea_id
             
 
@@ -118,6 +122,7 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
 
     async def updateAndReprocess(self, t: GuiaAereaSubsanarRequest):
         guia_aerea = await self.get(t.guiaAereaId)
+        guia_aerea.guia_aerea_id = t.guiaAereaId
         guia_aerea.numero = t.numero
         guia_aerea.confidence_numero = Constantes.VALIDATE_MANUAL_CONFIDENCE
 
@@ -184,18 +189,27 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         guia_aerea.instrucciones_especiales = t.instruccionesEspeciales
         guia_aerea.confidence_instrucciones_especiales = Constantes.VALIDATE_MANUAL_CONFIDENCE
 
-
-        guia_aerea.confidence_total = Constantes.VALIDATE_MANUAL_CONFIDENCE
-        guia_aerea.estado_confianza_codigo = Constantes.EstadoConfianza.REVISION_MANUAL
-        guia_aerea.observaciones = Constantes.EMPTY
         guia_aerea.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.PROCESADO
-        guia_aerea.modificado = DateUtil.get_current_local_datetime()
-        guia_aerea.modificado_por = self.session.full_name
+
         await self._validar_duplicados(guia_aerea)
         await self._validar_numero_formato(guia_aerea)
-        await self.document_repository.save(guia_aerea)
-        await self.guia_aerea_interviniente_service.saveAndReprocess(t)
-        
+
+        if Constantes.EstadoRegistroGuiaAereea.PROCESADO == guia_aerea.estado_registro_codigo:
+            guia_aerea.confidence_total = Constantes.VALIDATE_MANUAL_CONFIDENCE
+            guia_aerea.estado_confianza_codigo = Constantes.EstadoConfianza.REVISION_MANUAL
+            guia_aerea.observaciones = Constantes.EMPTY
+            
+            guia_aerea.modificado = DateUtil.get_current_local_datetime()
+            guia_aerea.modificado_por = self.session.full_name
+            
+            
+            await self.document_repository.save(guia_aerea)
+            await publish_document_update("INFO", f"Guía aérea N°{t.numero}: Actualizado correctamente! Procesando información adicional", t.guiaAereaId)
+            await self.guia_aerea_interviniente_service.saveAndReprocess(t)
+            await publish_document_update("INFO", f"Guía aérea N°{t.numero}: Información adicional procesada correctamente!", t.guiaAereaId)
+            await publish_document_update("SUCCESS", f"Guía aérea N°{t.numero}: Proceso de actualización finalizado correctamente.", t.guiaAereaId)
+       
+
         
 
 
@@ -231,72 +245,136 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
 
     async def apply_business_rules(self, doc: GuiaAereaRequest) -> GuiaAerea:
         guia_aerea = await self.get(doc.guiaAereaId)
-        await self._validar_confiabilidad(doc, guia_aerea)
+
+        # 1️⃣ Precargar intervinientes
+        intervinientes = await self.guia_aerea_interviniente_service.get_by_guia_aerea_id(
+            guia_aerea.guia_aerea_id
+        )
+
+        intervinientes_map = {
+            i.guia_aerea_interviniente_id: i
+            for i in intervinientes
+        }
+
+        intervinientes_modificados = set()
+
+        # 2️⃣ Validaciones (sin IO)
+        await self._validar_confiabilidad(
+            doc,
+            guia_aerea,
+            intervinientes_map,
+            intervinientes_modificados
+        )
         await self._validar_duplicados(guia_aerea)
         await self._validar_numero_formato(guia_aerea)
+
+        # 3️⃣ Estado final coherente
         guia_aerea.modificado = DateUtil.get_current_local_datetime()
         guia_aerea.modificado_por = Constantes.SYSTEM_USER
-        guia_aerea.estado_confianza_codigo = Constantes.EstadoConfianza.AUTO_VALIDADO
-        if not guia_aerea.estado_registro_codigo or guia_aerea.estado_registro_codigo != Constantes.EstadoRegistroGuiaAereea.OBSERVADO:
-            guia_aerea.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.PROCESADO
-        await self.document_repository.save(guia_aerea)
-        return guia_aerea
-    
-    async def _validar_confiabilidad(self, guia_aerea_request: GuiaAereaRequest, guia_aerea: GuiaAerea):
-        if guia_aerea_request.confianzas and len(guia_aerea_request.confianzas) > 0:
-            suma_ponderada = 0.0
-            peso_total_encontrado = 0.0
-            def camel_to_snake_upper(name):
-                    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-                    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).upper()
-            for tt in guia_aerea_request.confianzas:
-                if not tt: continue
-                clave_campo = camel_to_snake_upper(tt.nombreCampo.replace(".", "_"))
-                peso = getattr(Constantes.PesoCampoGuiaAerea, clave_campo, 0.0)
-                if tt.valorExtraido is not None:
-                    if peso > 0:
-                        suma_ponderada += tt.confidenceModelo * peso
-                        peso_total_encontrado += peso
-                await self._guardar_confianza_valida(tt, guia_aerea)
-            
-            if peso_total_encontrado > 0:
-                guia_aerea.confidence_total = suma_ponderada / peso_total_encontrado
-            else:
-                 guia_aerea.confidence_total = 0.0
-            if guia_aerea.confidence_total < 0.95: 
-                observacion = f" Nivel de confianza ponderado insuficiente ({guia_aerea.confidence_total:.2%}). Se requiere revisión manual. "
-                guia_aerea.observaciones = (guia_aerea.observaciones or "") + observacion + "\n"
-                guia_aerea.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.OBSERVADO
-            
-    
-    async def _guardar_confianza_valida(self, datos_confianza: GuiaAereaConfianzaRequest, guia_aerea: GuiaAerea):
-        if datos_confianza.confidenceModelo >= 0.95:
-            
-            def camel_to_snake(name):
-                s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-                return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
 
-            if datos_confianza.intervinienteId and "." in datos_confianza.nombreCampo:
-                 interviniente = await self.guia_aerea_interviniente_service.get_by_id(datos_confianza.intervinienteId)
-                 if interviniente:
-                     field_raw = datos_confianza.nombreCampo.split('.')[-1]
-                     campo_snake = camel_to_snake(field_raw)
-                     # Casos especiales de mapeo si existen, por ahora snake_case estandar
-                     conf_field = f"confidence_{campo_snake}"
-                     
-                     if hasattr(interviniente, conf_field):
-                         setattr(interviniente, conf_field, datos_confianza.confidenceModelo)
-                         # Actualizar auditoria
-                         interviniente.modificado = DateUtil.get_current_local_datetime()
-                         interviniente.modificado_por = Constantes.SYSTEM_USER
-                         await self.guia_aerea_interviniente_service.update(interviniente)
-            else:
-                campo_snake = camel_to_snake(datos_confianza.nombreCampo)
-                conf_field = f"confidence_{campo_snake}"
-                
-                if hasattr(guia_aerea, conf_field):
-                    setattr(guia_aerea, conf_field, datos_confianza.confidenceModelo)
-                    # La auditoria de guia_aerea se actualiza al final de apply_business_rules
+        if guia_aerea.confidence_total >= 0.95:
+            guia_aerea.estado_confianza_codigo = Constantes.EstadoConfianza.AUTO_VALIDADO
+        else:
+            guia_aerea.estado_confianza_codigo = Constantes.EstadoConfianza.REVISION_MANUAL
+
+        if guia_aerea.estado_registro_codigo != Constantes.EstadoRegistroGuiaAereea.OBSERVADO:
+            guia_aerea.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.PROCESADO
+
+        # 4️⃣ Persistencia
+        await self.document_repository.save(guia_aerea)
+
+        for interviniente in intervinientes_modificados:
+            await self.guia_aerea_interviniente_service.update(interviniente)
+
+        return guia_aerea
+
+    # -------------------------------------------------------------------------
+    # VALIDAR CONFIABILIDAD (SIN BD)
+    # -------------------------------------------------------------------------
+    async def _validar_confiabilidad(
+        self,
+        guia_aerea_request: GuiaAereaRequest,
+        guia_aerea: GuiaAerea,
+        intervinientes_map: dict,
+        intervinientes_modificados: set
+    ):
+        if not guia_aerea_request.confianzas:
+            return
+
+        suma_ponderada = 0.0
+        peso_total = 0.0
+
+        def camel_to_snake_upper(name: str) -> str:
+            s1 = re.sub(r'(.)([A-Z][a-z]+)', r'\1_\2', name)
+            return re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', s1).upper()
+
+        for confianza in guia_aerea_request.confianzas:
+            if not confianza:
+                continue
+
+            clave = camel_to_snake_upper(confianza.nombreCampo.replace(".", "_"))
+            peso = getattr(Constantes.PesoCampoGuiaAerea, clave, 0.0)
+
+            if confianza.valorExtraido is not None and peso > 0:
+                suma_ponderada += confianza.confidenceModelo * peso
+                peso_total += peso
+
+            self._guardar_confianza_valida(
+                confianza,
+                guia_aerea,
+                intervinientes_map,
+                intervinientes_modificados
+            )
+
+        guia_aerea.confidence_total = (
+            round(suma_ponderada / peso_total, 4) if peso_total > 0 else 0.0
+        )
+
+        if guia_aerea.confidence_total < 0.95:
+            guia_aerea.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.OBSERVADO
+            guia_aerea.observaciones = (
+                (guia_aerea.observaciones or "") +
+                f" Nivel de confianza insuficiente ({guia_aerea.confidence_total:.2%}).\n"
+            )
+
+    # -------------------------------------------------------------------------
+    # GUARDAR CONFIANZA (EN MEMORIA)
+    # -------------------------------------------------------------------------
+    def _guardar_confianza_valida(
+        self,
+        datos_confianza: GuiaAereaConfianzaRequest,
+        guia_aerea: GuiaAerea,
+        intervinientes_map: dict,
+        intervinientes_modificados: set
+    ):
+        if datos_confianza.confidenceModelo < 0.95:
+            return
+
+        def camel_to_snake(name: str) -> str:
+            s1 = re.sub(r'(.)([A-Z][a-z]+)', r'\1_\2', name)
+            return re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+        campo = datos_confianza.nombreCampo.split(".")[-1]
+
+        if datos_confianza.intervinienteId and "." in datos_confianza.nombreCampo:
+            interviniente = intervinientes_map.get(datos_confianza.intervinienteId)
+            if not interviniente:
+                return
+
+            conf_field = f"confidence_{camel_to_snake(campo)}"
+
+            if hasattr(interviniente, conf_field):
+                setattr(interviniente, conf_field, datos_confianza.confidenceModelo)
+                interviniente.modificado = DateUtil.get_current_local_datetime()
+                interviniente.modificado_por = Constantes.SYSTEM_USER
+                intervinientes_modificados.add(interviniente)
+
+        else:
+            conf_field = f"confidence_{camel_to_snake(campo)}"
+            if hasattr(guia_aerea, conf_field):
+                setattr(guia_aerea, conf_field, datos_confianza.confidenceModelo)
+
+     
 
 
     async def _validar_duplicados(self, doc: GuiaAerea):
@@ -305,6 +383,7 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
             doc.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.OBSERVADO
             obs = f" Número de guía duplicado. Ya existe en la guía con ID {duplicado.guia_aerea_id}. "
             doc.observaciones = (doc.observaciones or "") + obs + "\n"
+            await publish_document_update("WARNING", f"Guía aérea N°{doc.numero}: Número de guía aérea duplicado", doc.guia_aerea_id)
 
     async def _validar_numero_formato(self, doc: GuiaAerea):
         pattern = r"^\d{3}-\d{8}$"
@@ -314,6 +393,7 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
             doc.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.OBSERVADO
             obs = " Formato de número de guía inválido (No cumple formato MAWB: XXX-XXXXXXXX). "
             doc.observaciones = (doc.observaciones or "") + obs
+            await publish_document_update("WARNING", f"Guía aérea N°{doc.numero}: Número de guía aérea sin formato válido", doc.guia_aerea_id)
 
     async def delete(self, guia_aerea_id: UUID):
         guia_aerea = await self.get(str(guia_aerea_id))

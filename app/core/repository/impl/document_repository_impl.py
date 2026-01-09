@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.repository.document_repository import DocumentRepository
 from app.integration.impl.base_repository_impl import BaseRepositoryImpl
+from utl.constantes import Constantes
 
 
 
@@ -15,7 +16,7 @@ class DocumentRepositoryImpl(BaseRepositoryImpl[GuiaAerea], DocumentRepository):
         super().__init__(GuiaAerea, db)
 
     async def find_by_numero(self, numero: str, exclude_id: str = None) -> GuiaAerea | None:
-        query = select(GuiaAerea).where(GuiaAerea.numero == numero)
+        query = select(GuiaAerea).where(GuiaAerea.numero == numero, GuiaAerea.habilitado.is_(Constantes.HABILITADO))
         if exclude_id:
              try:
                  uuid_obj = uuid.UUID(exclude_id)
