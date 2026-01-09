@@ -1,12 +1,46 @@
 import os
 import sys
+import subprocess
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
-# Get the service type from environment variable
+
+# Define a simple handler for health checks
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"OK")
+
+    def log_message(self, format, *args):
+        pass  # Silence logs to avoid clutter
+
+
+# Get configuration
 service_type = os.getenv("SERVICE_TYPE", "api")
-port = os.getenv("PORT", "8000")
+# Cloud Run always provides a PORT env var (default 8080)
+port = int(os.getenv("PORT", "8080"))
 
 if service_type == "worker":
-    # Command for Celery Worker
+    # --- WORKER MODE ---
+    # Cloud Run requires the container to listen on $PORT for health checks.
+    # Celery doesn't do this natively, so we run a background thread with a dummy HTTP server.
+
+    print(f"Starting dummy health check server on port {port}...")
+
+    def start_health_server():
+        try:
+            server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
+            server.serve_forever()
+        except Exception as e:
+            print(f"Health check server failed: {e}")
+
+    # Start the HTTP server in a daemon thread
+    health_thread = threading.Thread(target=start_health_server, daemon=True)
+    health_thread.start()
+
+    # Now run the actual Celery Worker in the main process
+    print("Starting Celery worker...")
     cmd = [
         "celery",
         "-A",
@@ -18,15 +52,16 @@ if service_type == "worker":
         "-Q",
         "document_queue,celery",
     ]
-else:
-    # Default command for API (Uvicorn)
-    # Cloud Run injects the PORT environment variable, usually 8080.
-    # We must start uvicorn on that specific port.
-    cmd = ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", port]
 
-# Replace the current process with the new command
-try:
+    # Use subprocess instead of execvp to keep the python process (and health thread) alive
+    result = subprocess.run(cmd)
+    sys.exit(result.returncode)
+
+else:
+    # --- API MODE ---
+    # For the API, we simply run Uvicorn on the requested port.
+    print(f"Starting API on port {port}...")
+    cmd = ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", str(port)]
+
+    # Replace the current process with uvicorn
     os.execvp(cmd[0], cmd)
-except Exception as e:
-    print(f"Error executing command {' '.join(cmd)}: {e}")
-    sys.exit(1)
