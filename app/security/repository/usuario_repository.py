@@ -7,6 +7,7 @@ from dto.usuario_dtos import UsuarioFiltroRequest, UsuarioResponse
 from typing import Tuple, List
 
 
+
 class UsuarioRepository(BaseRepository[Usuario]):
 
     @abstractmethod

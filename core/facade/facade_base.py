@@ -1,4 +1,5 @@
 from config.mapper import Mapper
+from core.context.user_context import UserSession, get_user_session
 
 
 class FacadeBase:
@@ -12,4 +13,6 @@ class FacadeBase:
         self.message_delete = ""
         self.path_base_front = ""
  
-    
+    @property
+    def session(self) -> UserSession:
+        return get_user_session()

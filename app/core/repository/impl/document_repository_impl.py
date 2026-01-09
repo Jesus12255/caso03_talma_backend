@@ -1,51 +1,39 @@
-import logging
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.domain.document import Document
-from app.core.repository.document_repository import DocumentRepository
+from app.core.domain.guia_aerea import  GuiaAerea
 from sqlalchemy import select
+import uuid
+from sqlalchemy.orm import selectinload
 
-logger = logging.getLogger(__name__)
+from app.core.repository.document_repository import DocumentRepository
+from app.integration.impl.base_repository_impl import BaseRepositoryImpl
+from utl.constantes import Constantes
 
-class DocumentRepositoryImpl(DocumentRepository):
+
+
+class DocumentRepositoryImpl(BaseRepositoryImpl[GuiaAerea], DocumentRepository):
 
     def __init__(self, db: AsyncSession):
-        self.db = db
+        super().__init__(GuiaAerea, db)
 
-    async def save(self, doc: Document) -> Document:
-        logger.debug(f"Repository saving document {doc.file_name}")
-        try:
-            self.db.add(doc)
-            await self.db.commit()
-            await self.db.refresh(doc)
-            logger.debug(f"Document {doc.file_name} saved successfully with ID {doc.document_id}")
-            return doc
-        except Exception as e:
-            logger.error(f"Error in repository save for {doc.file_name}: {e}", exc_info=True)
-            raise e
+    async def find_by_numero(self, numero: str, exclude_id: str = None) -> GuiaAerea | None:
+        query = select(GuiaAerea).where(GuiaAerea.numero == numero, GuiaAerea.habilitado.is_(Constantes.HABILITADO))
+        if exclude_id:
+             try:
+                 uuid_obj = uuid.UUID(exclude_id)
+                 query = query.where(GuiaAerea.guia_aerea_id != uuid_obj)
+             except ValueError:
+                 # If ID is invalid, safely ignore exclusion
+                 pass
+        
+        result = await self.db.execute(query)
+        return result.scalars().first()
 
-    async def find_all(self, skip: int = 0, limit: int = 10) -> list[Document]:
-        try:
-            query = select(Document).offset(skip).limit(limit)
-            result = await self.db.execute(query)
-            return result.scalars().all()
-        except Exception as e:
-            logger.error(f"Error retrieving documents: {e}", exc_info=True)
-            return []
-
-    async def find_by_id(self, id):
-        result = await self.db.execute(
-            select(Document).where(Document.document_id == id)
+    async def get_by_id_with_relations(self, id: str) -> GuiaAerea | None:
+        query = select(GuiaAerea).where(GuiaAerea.guia_aerea_id == id).options(
+            selectinload(GuiaAerea.confianzas_extraccion),
+            selectinload(GuiaAerea.intervinientes)
         )
-        return result.scalar_one_or_none()
-
-    async def delete(self, id) -> bool:
-        doc = await self.find_by_id(id)
-        if not doc:
-            return False
-        try:
-            await self.db.delete(doc)
-            await self.db.commit()
-            return True
-        except Exception as e:
-             logger.error(f"Error deleting document {id}: {e}", exc_info=True)
-             raise e
+        result = await self.db.execute(query)
+        return result.scalars().first()
+    
+    

@@ -70,3 +70,10 @@ class UsuarioFiltroRequest(BaseRequest):
     fechaFin: Optional[str] = None
     palabraClave: Optional[str] = None
     habilitado: Optional[bool] = None
+
+
+class UsuarioCambioPasswordRequest(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    password: str
+    confirmarPassword: str

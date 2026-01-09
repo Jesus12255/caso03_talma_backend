@@ -1,21 +1,16 @@
-from abc import ABC, abstractmethod
-from app.core.domain.document import Document
+from abc import  abstractmethod
+from typing import Optional
+from app.integration.base_repository import BaseRepository
+from app.core.domain.guia_aerea import GuiaAerea
 
-
-class DocumentRepository(ABC):
-
+class DocumentRepository(BaseRepository[GuiaAerea]):
+    
     @abstractmethod
-    async def save(self, doc: Document) -> Document:
+    async def find_by_numero(self, numero: str, exclude_id: Optional[str] = None) -> Optional[GuiaAerea]:
         pass
 
     @abstractmethod
-    async def find_all(self, skip: int = 0, limit: int = 10) -> list[Document]:
+    async def get_by_id_with_relations(self, id: str) -> Optional[GuiaAerea]:
         pass
 
-    @abstractmethod
-    async def find_by_id(self, id) -> Document | None:
-        pass
-
-    @abstractmethod
-    async def delete(self, id) -> bool:
-        pass
+    

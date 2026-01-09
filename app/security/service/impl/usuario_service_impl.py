@@ -1,11 +1,14 @@
 from app.security.domain import Usuario
+from core.exceptions import  AppBaseException, NotFoundException
+from fastapi import status
 from app.security.repository.usuario_repository import UsuarioRepository
 from app.security.service.usuario_service import UsuarioService
 from config.mapper import Mapper
+from core.facade.facade_base import FacadeBase
 from dto.universal_dto import BaseOperacionResponse
-from dto.usuario_dtos import UsuarioRequest, UsuarioFiltroRequest, UsuarioFiltroResponse, UsuarioStatusRequest
+from dto.usuario_dtos import UsuarioCambioPasswordRequest, UsuarioRequest, UsuarioFiltroRequest, UsuarioFiltroResponse, UsuarioStatusRequest
 from dto.collection_response import CollectionResponse
-from utl.generic_util import GenericUtil
+from utl.generic_util import DateUtil, GenericUtil
 from config.config import settings
 from utl.security_util import SecurityUtil
 
@@ -13,7 +16,7 @@ from app.core.services.email_service import EmailService
 
 import asyncio
 
-class UsuarioServiceImpl(UsuarioService):
+class UsuarioServiceImpl(UsuarioService, FacadeBase):
 
     def __init__(self, usuario_repository: UsuarioRepository, modelMapper: Mapper, email_service: EmailService):
         self.usuario_repository = usuario_repository
@@ -23,7 +26,7 @@ class UsuarioServiceImpl(UsuarioService):
     async def saveOrUpdate(self, t: UsuarioRequest) -> None:
 
         if GenericUtil.no_es_nulo(t, "usuarioId"):
-            usuario = await self.usuario_repository.get(t.usuarioId)
+            usuario = await self.get(t.usuarioId)
             if t.rolId: 
                 usuario.rol_id = t.rolId
             usuario.primer_nombre = t.primerNombre
@@ -34,16 +37,21 @@ class UsuarioServiceImpl(UsuarioService):
             usuario.documento = t.documento
             usuario.correo = t.correo
             usuario.celular = t.celular
+            usuario.modificado = DateUtil.get_current_local_datetime()
+            usuario.modificado_por = self.session.full_name
             await self.usuario_repository.save(usuario)
 
         else:
             print("DEBUG: Creating new user...") # Debug logic
             usuario = self.modelMapper.to_entity(t, Usuario)
-            usuario.usuario = t.primerNombre + t.apellidoPaterno + GenericUtil.generate_unique_code_8()
+            usuario.usuario = t.primerNombre + t.apellidoPaterno + GenericUtil.generate_unique_code_4()
             
             # Capture the raw password to send via email
             raw_password = settings.PASWORD_INICIAL
             usuario.password = SecurityUtil.get_password_hash(raw_password) 
+            
+            usuario.creado = DateUtil.get_current_local_datetime()
+            usuario.creado_por = self.session.full_name
             
             await self.usuario_repository.save(usuario)
             print("DEBUG: User saved to DB. Scheduling email task...") # Debug logic
@@ -63,9 +71,6 @@ class UsuarioServiceImpl(UsuarioService):
                 )
                 print(f"DEBUG: Email task scheduled for {usuario.correo}")
             
-
-
-            
     async def changeStatus(self, t: UsuarioStatusRequest) -> None:
         usuario = await self.usuario_repository.get(t.usuarioId)
         if usuario:
@@ -73,7 +78,10 @@ class UsuarioServiceImpl(UsuarioService):
             await self.usuario_repository.save(usuario)
 
     async def get(self, usuarioId: str) -> Usuario:
-        return await self.usuario_repository.get(usuarioId)
+        usuario = await self.usuario_repository.get(usuarioId)
+        if not usuario:
+             raise NotFoundException("El usuario no se encuentra registrado", status_code=status.HTTP_404_NOT_FOUND)
+        return usuario
 
     async def find(self, request: UsuarioFiltroRequest) -> CollectionResponse[UsuarioFiltroResponse]:
         usuarios, count = await self.usuario_repository.find(request)
@@ -99,7 +107,14 @@ class UsuarioServiceImpl(UsuarioService):
             sort=request.sort
         )
 
-
+    async def updatePassword(self, request: UsuarioCambioPasswordRequest) -> BaseOperacionResponse:
+        usuario = await self.get(self.session.user_id)
+        if SecurityUtil.verify_password(request.password, usuario.password):
+            raise AppBaseException(message="La nueva contraseña no puede ser igual a la anterior", status_code=status.HTTP_400_BAD_REQUEST)
+        usuario.password = SecurityUtil.get_password_hash(request.password)
+        usuario.modificado = DateUtil.get_current_local_datetime()
+        usuario.modificado_por = self.session.full_name
+        await self.usuario_repository.save(usuario)
 
 
 

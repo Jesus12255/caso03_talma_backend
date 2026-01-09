@@ -1,5 +1,7 @@
 from typing import Any, Collection, Dict, Callable, TypeVar
 from datetime import datetime
+from utl.date_util import DateUtil, FORMAT02
+
 import random
 import base64
 from threading import Lock
@@ -15,16 +17,6 @@ class Constantes:
     ROL = "ROL"
 
 
-class DateUtil:
-    FORMAT02 = "%Y%m%d%H%M%S"
-
-    @staticmethod
-    def get_current_local_datetime():
-        return datetime.now()
-
-    @staticmethod
-    def format(date: datetime, pattern: str) -> str:
-        return date.strftime(pattern)
 
 
 class GenericUtil:
@@ -82,6 +74,12 @@ class GenericUtil:
     @staticmethod
     def CSC_if_string_null(value: str) -> str:
         return value if GenericUtil.is_not_empty(value) else Constantes.CSC
+    
+    @staticmethod
+    def is_empty_list(objeto: Any) -> bool:
+        return isinstance(objeto, list) and GenericUtil.is_empty(objeto)
+    
+ 
 
     # =========================
     # STRINGS
@@ -99,9 +97,9 @@ class GenericUtil:
     # =========================
     @staticmethod
     def build_code_8_unic() -> str:
-        fecha = DateUtil.format(
+        fecha = DateUtil.format_datetime(
             DateUtil.get_current_local_datetime(),
-            DateUtil.FORMAT02
+            FORMAT02
         )
         parte_fecha = fecha[-4:]
         numero_aleatorio = random.randint(1000, 9999)
@@ -177,9 +175,6 @@ class GenericUtil:
 
 
     @staticmethod
-    def generate_unique_code_8() -> str:
-        
-        now = datetime.now()
-        time_part = now.strftime("%M%S")
+    def generate_unique_code_4() -> str:
         random_part = random.randint(1000, 9999)
-        return f"{time_part}{random_part}"
+        return f"{random_part}"

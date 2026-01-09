@@ -52,7 +52,15 @@ class AuthServiceImpl(AuthService):
 
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = self.create_access_token(
-            data={"sub": user_orm.correo}, expires_delta=access_token_expires
+            data={
+                "sub": user_orm.correo,
+                "usuarioId": str(user_orm.usuario_id), 
+                "usuario": user_orm.usuario, 
+                "nombre":  f"{user_orm.primer_nombre or ''} {user_orm.segundo_nombre or ''} {user_orm.apellido_paterno or ''} {user_orm.apellido_materno or ''}".replace("  ", " ").strip(),
+                "rolId": str(user_orm.rol.rol_id) if user_orm.rol else None, 
+                "rolCodigo": user_orm.rol.codigo if user_orm.rol else None,
+                "rol": user_orm.rol.nombre if user_orm.rol else None
+            }, expires_delta=access_token_expires
         )
         return Token(access_token=access_token, token_type="bearer")
 

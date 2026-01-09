@@ -1,15 +1,36 @@
 from abc import ABC, abstractmethod
-
-from dto.document import DocumentRequest
-from dto.universal_dto import BaseOperacionResponse
+from typing import Any
+from uuid import UUID
+from app.core.domain.guia_aerea import GuiaAerea
+from dto.guia_aerea_dtos import  GuiaAereaFiltroRequest, GuiaAereaRequest, GuiaAereaSubsanarRequest
 
 
 class DocumentService(ABC):
 
     @abstractmethod
-    async def save(self, request: DocumentRequest):
+    async def saveOrUpdate(self, request: GuiaAereaRequest):
         pass
 
     @abstractmethod
-    async def get_all_documents(self, skip: int = 0, limit: int = 10):
+    async def get(self, documentoId: str) -> GuiaAerea:
+        pass
+
+    @abstractmethod
+    async def find(self, request: GuiaAereaFiltroRequest) -> tuple[Any, int]:
+        pass
+
+    @abstractmethod
+    async def get_with_relations(self, documentoId: str) -> GuiaAerea:
+        pass
+
+    @abstractmethod
+    async def reprocess(self, document_id: str):
+        pass
+
+    @abstractmethod
+    async def updateAndReprocess(self, request: GuiaAereaSubsanarRequest):
+        pass
+
+    @abstractmethod
+    async def delete(self, guia_aerea_id: UUID) -> bool:
         pass
