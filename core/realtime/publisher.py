@@ -9,12 +9,15 @@ logger = logging.getLogger(__name__)
 
 async def publish_document_update(type: str, message: str, doc_id: str = None):
     try:
-        r = redis.from_url(
-            settings.REDIS_URL, 
-            encoding="utf-8", 
-            decode_responses=True,
-            ssl_cert_reqs="none" 
-        )
+        connection_kwargs = {
+            "encoding": "utf-8",
+            "decode_responses": True
+        }
+        
+        if settings.REDIS_URL.startswith("rediss://"):
+            connection_kwargs["ssl_cert_reqs"] = "none"
+
+        r = redis.from_url(settings.REDIS_URL, **connection_kwargs)
         
         payload = {
             "type": type,
