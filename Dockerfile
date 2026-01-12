@@ -26,4 +26,8 @@ COPY . .
 EXPOSE 8000
 
 # Default command to run the API (can be overridden for Celery)
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Copy the entrypoint script
+COPY run_service.py .
+
+# Default command uses the python script to decide based on SERVICE_TYPE env var
+CMD ["python", "run_service.py"]
