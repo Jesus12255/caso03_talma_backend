@@ -44,7 +44,7 @@ if service_type == "worker":
     cmd = [
         "celery",
         "-A",
-        "core.celery.celery_app.celery_app",
+        "core.celery.celery_app",
         "worker",
         "--loglevel=info",
         "--pool=threads",
