@@ -33,6 +33,8 @@ steps:
       - 'talma-celery'
       - '--image'
       - 'us-central1-docker.pkg.dev/$PROJECT_ID/talma-repo/backend:$COMMIT_SHA'
+      - '--port'
+      - '8080'
       - '--region'
       - 'us-central1'
       - '--platform'
