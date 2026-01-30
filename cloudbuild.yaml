@@ -46,3 +46,6 @@ steps:
 
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/talma-repo/backend:$COMMIT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
