@@ -40,7 +40,16 @@ class DocumentFacadeImpl(DocumentFacade):
                 self.validar_campos_requeridos_guia_aerea(obj_req)
                 await self.document_service.saveOrUpdate(obj_req)
                 if obj_req.guiaAereaId:
-                    process_document_validations.delay(obj_req.model_dump_json())
+                    from config.config import settings
+                    # Log redacted Redis URL for debugging
+                    redacted_url = settings.REDIS_URL.split('@')[-1] if '@' in settings.REDIS_URL else "UNKNOWN"
+                    logger.info(f"Enviando tarea a Redis: ...@{redacted_url}")
+                    
+                    try:
+                        task = process_document_validations.apply_async(args=[obj_req.model_dump_json()], queue="document_queue")
+                        logger.info(f"Tarea enviada con ID: {task.id} para Guía: {obj_req.guiaAereaId}")
+                    except Exception as exc:
+                        logger.error(f"FALLO al enviar tarea Celery: {exc}")
             return BaseOperacionResponse(codigo="200", mensaje="Documentos recibidos. Procesando en segundo plano.")
         
         except Exception as e:
