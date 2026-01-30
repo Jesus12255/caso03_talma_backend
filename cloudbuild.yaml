@@ -21,7 +21,7 @@ steps:
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
-      - '--set-env-vars'
+      - '--update-env-vars'
       - 'SERVICE_TYPE=api'
 
   # 4. Deploy Celery Worker Service (Background Worker)
@@ -43,7 +43,7 @@ steps:
       - '--min-instances'
       - '1' # CRITICAL: Keep at least one instance alive to process queue
       - '--no-cpu-throttling' # CRITICAL: Ensure CPU is available even when not processing HTTP requests
-      - '--set-env-vars'
+      - '--update-env-vars'
       - 'SERVICE_TYPE=worker'
 
 images:
