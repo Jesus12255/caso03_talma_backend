@@ -42,11 +42,9 @@ class UsuarioServiceImpl(UsuarioService, FacadeBase):
             await self.usuario_repository.save(usuario)
 
         else:
-            print("DEBUG: Creating new user...") # Debug logic
+            await self.validate_email(t.correo)
             usuario = self.modelMapper.to_entity(t, Usuario)
             usuario.usuario = t.primerNombre + t.apellidoPaterno + GenericUtil.generate_unique_code_4()
-            
-            # Capture the raw password to send via email
             raw_password = settings.PASWORD_INICIAL
             usuario.password = SecurityUtil.get_password_hash(raw_password) 
             
@@ -54,12 +52,9 @@ class UsuarioServiceImpl(UsuarioService, FacadeBase):
             usuario.creado_por = self.session.full_name
             
             await self.usuario_repository.save(usuario)
-            print("DEBUG: User saved to DB. Scheduling email task...") # Debug logic
             
-            # Send credentials email (Background Task)
             if usuario.correo:
                 nombre_completo = f"{usuario.primer_nombre} {usuario.apellido_paterno}"
-                # Run in a separate thread and don't await (fire and forget)
                 asyncio.create_task(
                     asyncio.to_thread(
                         self.email_service.send_credentials_email, 
@@ -69,7 +64,13 @@ class UsuarioServiceImpl(UsuarioService, FacadeBase):
                         nombre_completo
                     )
                 )
-                print(f"DEBUG: Email task scheduled for {usuario.correo}")
+
+
+    async def validate_email(self, email: str) -> bool:
+        usuario = await self.usuario_repository.get_by_email(email)
+        if usuario: 
+            raise AppBaseException(message=f"El correo ya se encuentra registrado, le pertenece al usuario {usuario.usuario}", status_code=status.HTTP_400_BAD_REQUEST)
+      
             
     async def changeStatus(self, t: UsuarioStatusRequest) -> None:
         usuario = await self.usuario_repository.get(t.usuarioId)

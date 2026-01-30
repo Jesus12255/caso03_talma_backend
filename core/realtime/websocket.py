@@ -24,7 +24,11 @@ async def redis_connector():
     try:
         while True:
             try:
-                redis_conn = redis.from_url(settings.REDIS_URL, socket_connect_timeout=2)
+                connection_kwargs = {"socket_connect_timeout": 2}
+                if settings.REDIS_URL.startswith("rediss://"):
+                     connection_kwargs["ssl_cert_reqs"] = "none"
+
+                redis_conn = redis.from_url(settings.REDIS_URL, **connection_kwargs)
                 async with redis_conn.pubsub() as pubsub:
                     await pubsub.subscribe("document_updates")
                     logger.info(f"Conectado a Redis para WebSockets en {settings.REDIS_URL}")
