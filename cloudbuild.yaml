@@ -1,13 +1,13 @@
 steps:
-
+  # 1. Build the Backend Image (Shared by API and Worker)
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/talma-repo/backend:$COMMIT_SHA', '.']
 
-
+  # 2. Push the Image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/talma-repo/backend:$COMMIT_SHA']
 
-
+  # 3. Deploy API Service (Standard Web Service)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -21,6 +21,28 @@ steps:
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'SERVICE_TYPE=api'
+
+  # 4. Deploy Celery Worker Service (Background Worker)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'talma-celery'
+      - '--image'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/talma-repo/backend:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--no-allow-unauthenticated' # Workers don't need public access usually, or use allow-unauthenticated if needed for health checks from non-GCP
+      - '--min-instances'
+      - '1' # CRITICAL: Keep at least one instance alive to process queue
+      - '--no-cpu-throttling' # CRITICAL: Ensure CPU is available even when not processing HTTP requests
+      - '--set-env-vars'
+      - 'SERVICE_TYPE=worker'
 
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/talma-repo/backend:$COMMIT_SHA'
