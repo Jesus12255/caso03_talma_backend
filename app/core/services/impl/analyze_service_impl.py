@@ -1,3 +1,4 @@
+from core.facade.facade_base import FacadeBase
 import asyncio
 import base64
 import logging
@@ -28,7 +29,7 @@ Task = Tuple[asyncio.Task, str, bytes]
 
 
 
-class AnalyzeServiceImpl(AnalyzeService):
+class AnalyzeServiceImpl(AnalyzeService, FacadeBase):
 
     def __init__(self, extraction_engine: ExtractionEngine, document_service: DocumentService, document_facade: DocumentFacade, storage_service: StorageService ):
         self.extraction_engine = extraction_engine
@@ -214,7 +215,8 @@ class AnalyzeServiceImpl(AnalyzeService):
             guia = self._build_guia(doc)
             if not guia:
                 continue
-
+            guia.usuarioId = self.session.user_id
+            
             # Batch deduplication
             if guia.numero and guia.numero in seen_numeros:
                 yield self._warning(f"Omitiendo duplicado en lote: {guia.numero}")

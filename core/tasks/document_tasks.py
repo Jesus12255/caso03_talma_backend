@@ -1,7 +1,10 @@
+from dto.notificacion import NotificacionRequest
+from app.core.services.impl.notificacion_service_impl import NotificacionServiceImpl
+from app.core.repository.impl.notificacion_repository_impl import NotificacionRepositoryImpl
 import asyncio
 import logging
 import json
-import redis.asyncio as redis
+import uuid
 from core.celery.celery_app import celery_app
 from app.core.repository.impl.guia_aerea_filtro_repository_impl import GuiaAereaFiltroRepositoryImpl
 from app.core.repository.impl.guia_aerea_interviniente_repository_impl import GuiaAereaIntervinienteRepositoryImpl
@@ -25,9 +28,10 @@ async def _process_validations_async(obj_req: str):
         t = None
         try:
             t = GuiaAereaRequest.model_validate(json.loads(obj_req)) 
-            from utl.date_util import DateUtil # Import local para evitar circular si hace falta
+            from utl.date_util import DateUtil 
  
-
+            notificacion_repository = NotificacionRepositoryImpl(db)
+            notificacion_service = NotificacionServiceImpl(notificacion_repository)
             guia_aerea_interviniente_repository = GuiaAereaIntervinienteRepositoryImpl(db)
             confianza_extraccion_repository = ConfianzaExtraccionRepositoryImpl(db)
             guia_aerea_interviniente_service = GuiaAereaIntervinienteServiceImpl(guia_aerea_interviniente_repository, confianza_extraccion_repository)
@@ -48,15 +52,22 @@ async def _process_validations_async(obj_req: str):
 
             doc = await guia_aerea_service.apply_business_rules(t)
             logger.info(f"Documento {t.guiaAereaId} procesado. Estado: {doc.estado_registro_codigo}")
-            
+
             if doc:
-                final_msg = "Procesado correctamente"
-                msg_type = "SUCCESS"
-                if Constantes.EstadoRegistroGuiaAereea.OBSERVADO == doc.estado_registro_codigo : 
-                    final_msg = "Observado, favor de corregir"
-                    msg_type = "WARNING"
-                
-                await publish_document_update(msg_type, f"Guía aérea N°{t.numero}: {final_msg}", t.guiaAereaId)
+                if Constantes.EstadoRegistroGuiaAereea.OBSERVADO != doc.estado_registro_codigo : 
+                    await publish_document_update("SUCCESS", f"Guía aérea N°{t.numero}: Procesado correctamente", t.guiaAereaId)
+                else:
+                    logger.info(f"Documento Observado. Creando notificación para usuario {t.usuarioId}...")
+                    notificacion_request = NotificacionRequest(
+                        notificacionId=uuid.uuid4(),
+                        guiaAereaId=t.guiaAereaId,
+                        usuarioId=t.usuarioId,
+                        tipoCodigo=Constantes.TipoNotificacion.OBSERVACION,
+                        titulo="Guía Aérea Observada",
+                        mensaje=f"Guía aérea N°{t.numero}: Observado, favor de corregir",
+                        severidadCodigo=Constantes.SeveridadNotificacion.WARNING
+                    )
+                    await notificacion_service.save(notificacion_request)
 
         except Exception as e:
             doc_id = t.guiaAereaId if t else "Desconocido"

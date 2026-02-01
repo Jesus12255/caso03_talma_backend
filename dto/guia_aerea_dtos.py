@@ -26,6 +26,7 @@ class GuiaAereaRequest(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     guiaAereaId: Optional[UUID] = None
+    usuarioId: Optional[UUID] = None
 
     intervinientes: Optional[List[IntervinienteRequest]] = Field(
         default=None,
@@ -64,6 +65,7 @@ class GuiaAereaRequest(BaseModel):
     observaciones: Optional[str] = None
     estadoRegistroCodigo: Optional[str] = Field(default=None, max_length=40)
     url: Optional[str] = None
+    
 
     confianzas: Optional[List[GuiaAereaConfianzaRequest]] = Field(
         default=None,
