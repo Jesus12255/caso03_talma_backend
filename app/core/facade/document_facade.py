@@ -1,3 +1,4 @@
+from dto.guia_aerea_dtos import DeleteAllGuiaAereaRequest
 from abc import ABC, abstractmethod
 from typing import List, Any
 from uuid import UUID
@@ -44,4 +45,8 @@ class DocumentFacade(ABC):
 
     @abstractmethod
     async def delete(self, guia_aerea_id: UUID) -> BaseOperacionResponse:
+        pass
+
+    @abstractmethod
+    async def deleteAll(self, request: DeleteAllGuiaAereaRequest) -> BaseOperacionResponse:
         pass

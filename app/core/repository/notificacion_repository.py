@@ -10,3 +10,5 @@ class NotificacionRepository(BaseRepositoryImpl[Notificacion]):
     @abstractmethod
     async def find_by_guia_aerea_id(self, guia_aerea_id: UUID) -> list[Notificacion]:
         raise NotImplementedError
+
+    

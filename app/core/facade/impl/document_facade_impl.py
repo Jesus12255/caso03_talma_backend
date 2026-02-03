@@ -1,3 +1,4 @@
+from dto.guia_aerea_dtos import DeleteAllGuiaAereaRequest
 import json
 import logging
 from typing import List
@@ -186,4 +187,6 @@ class DocumentFacadeImpl(DocumentFacade):
         return BaseOperacionResponse(codigo="200", mensaje="Registro eliminado correctamente.")
 
 
-        
+    async def deleteAll(self, request: DeleteAllGuiaAereaRequest) -> BaseOperacionResponse:
+        await self.document_service.deleteAll(request)
+        return BaseOperacionResponse(codigo="200", mensaje="Registros eliminados correctamente.")
