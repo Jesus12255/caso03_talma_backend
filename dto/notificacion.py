@@ -14,6 +14,8 @@ class NotificacionRequest(BaseModel):
     
     
     
+from datetime import datetime
+
 class NotificacionResponse(NotificacionRequest):
     estadoCodigo: str
-    creado: str
+    creado: datetime

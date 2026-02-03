@@ -205,10 +205,10 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
             guia_aerea.modificado_por = self.session.full_name
             
             await self.document_repository.save(guia_aerea)
-            await publish_user_notification(self.session.user_id, "INFO", f"Guía aérea N°{t.numero}: Actualizado correctamente! Procesando información adicional", str(t.guiaAereaId))
+            await publish_user_notification(str(self.session.user_id), "INFO", f"Guía aérea N°{t.numero}: Actualizado correctamente! Procesando información adicional", str(t.guiaAereaId))
             await self.guia_aerea_interviniente_service.saveAndReprocess(t)
-            await publish_user_notification(self.session.user_id, "INFO", f"Guía aérea N°{t.numero}: Información adicional procesada correctamente!", str(t.guiaAereaId))
-            await publish_user_notification(self.session.user_id, "SUCCESS", f"Guía aérea N°{t.numero}: Proceso de actualización finalizado correctamente.", str(t.guiaAereaId))
+            await publish_user_notification(str(self.session.user_id), "INFO", f"Guía aérea N°{t.numero}: Información adicional procesada correctamente!", str(t.guiaAereaId))
+            await publish_user_notification(str(self.session.user_id), "SUCCESS", f"Guía aérea N°{t.numero}: Proceso de actualización finalizado correctamente.", str(t.guiaAereaId))
 
             await self.notificacion_service.resolver(guia_aerea.guia_aerea_id)
            
@@ -383,19 +383,26 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         duplicado = await self.document_repository.find_by_numero(doc.numero, str(doc.guia_aerea_id))
         if duplicado:
             doc.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.OBSERVADO
-            obs = f" Número de guía duplicado. Ya existe en la guía con ID {duplicado.guia_aerea_id}. "
+            obs = " Número de guía duplicado. "
             doc.observaciones = (doc.observaciones or "") + obs + "\n"
             await publish_document_update("WARNING", f"Guía aérea N°{doc.numero}: Número de guía aérea duplicado", doc.guia_aerea_id)
+            if hasattr(self, 'session') and self.session and self.session.user_id:
+                 await publish_user_notification(str(self.session.user_id), "WARNING", f"Guía aérea N°{doc.numero}: Número de guía aérea duplicado", str(doc.guia_aerea_id), title="Validación Fallida", severity="WARNING")
 
     async def _validar_numero_formato(self, doc: GuiaAerea):
         pattern = r"^\d{3}-\d{8}$"
-        if  doc.numero and re.match(pattern, doc.numero):
+        clean_num = doc.numero.replace(" ", "") if doc.numero else ""
+        
+        if  clean_num and re.match(pattern, clean_num):
+            doc.numero = clean_num # Auto-fix the format
             doc.tipo_codigo = Constantes.TipoGuiaAerea.MAESTRA
         else:
             doc.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.OBSERVADO
             obs = " Formato de número de guía inválido (No cumple formato MAWB: XXX-XXXXXXXX). "
             doc.observaciones = (doc.observaciones or "") + obs
             await publish_document_update("WARNING", f"Guía aérea N°{doc.numero}: Número de guía aérea sin formato válido", doc.guia_aerea_id)
+            if hasattr(self, 'session') and self.session and self.session.user_id:
+                 await publish_user_notification(str(self.session.user_id), "WARNING", f"Guía aérea N°{doc.numero}: Número de guía aérea sin formato válido", str(doc.guia_aerea_id), title="Validación Fallida", severity="WARNING")
 
     async def delete(self, guia_aerea_id: UUID):
         guia_aerea = await self.get(str(guia_aerea_id))
