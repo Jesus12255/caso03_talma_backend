@@ -286,3 +286,8 @@ class GuiaAereaFiltroRequest(BaseRequest):
 class GuiaAereaComboResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     estado: Optional[ComboBaseResponse] = None
+
+
+class DeleteAllGuiaAereaRequest(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    guiaAereaIds: Optional[List[UUID]] = None

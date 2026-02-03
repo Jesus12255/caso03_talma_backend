@@ -1,3 +1,4 @@
+from dto.guia_aerea_dtos import DeleteAllGuiaAereaRequest
 from typing import List
 from uuid import UUID
 from fastapi import APIRouter, Depends, File, Form, UploadFile
@@ -35,3 +36,6 @@ async def descargarGuiaAerea(request: DescargarGuiaAereaRequest, document_facade
 async def delete(guia_aerea_id: UUID, document_facade: DocumentFacade = Depends(get_document_facade)) -> BaseOperacionResponse:
     return await document_facade.delete(guia_aerea_id)
 
+@router.post("/deleteAll", response_model=BaseOperacionResponse)
+async def deleteAll(request: DeleteAllGuiaAereaRequest, document_facade: DocumentFacade = Depends(get_document_facade)) -> BaseOperacionResponse:
+    return await document_facade.deleteAll(request)
