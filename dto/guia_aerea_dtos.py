@@ -191,6 +191,7 @@ class GuiaAereaResponse(BaseModel):
 class GuiaAereaSubsanarRequest(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
+   
     guiaAereaId: Optional[UUID] = None
     numero: Optional[str] = None
     fechaEmision: Optional[datetime] = None

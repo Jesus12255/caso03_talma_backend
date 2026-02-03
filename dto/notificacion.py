@@ -14,3 +14,6 @@ class NotificacionRequest(BaseModel):
     
     
     
+class NotificacionResponse(NotificacionRequest):
+    estadoCodigo: str
+    creado: str

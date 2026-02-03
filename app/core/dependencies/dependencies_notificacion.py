@@ -1,3 +1,4 @@
+from app.core.facade.impl.notificacion_facade_impl import NotificacionFacadeImpl
 from app.core.services.impl.notificacion_service_impl import NotificacionServiceImpl
 from app.core.repository.impl.notificacion_repository_impl import NotificacionRepositoryImpl
 from fastapi import Depends
@@ -10,3 +11,6 @@ def get_notificacion_repository(db: AsyncSession = Depends(get_db)):
 
 def get_notificacion_service(repository = Depends(get_notificacion_repository)):
     return NotificacionServiceImpl(repository)
+
+def get_notificacion_facade(service = Depends(get_notificacion_service)):
+    return NotificacionFacadeImpl(service)
