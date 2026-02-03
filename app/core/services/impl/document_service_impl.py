@@ -1,10 +1,11 @@
 
+from app.core.services.notificacion_service import NotificacionService
+from core.realtime.publisher import publish_user_notification
 from typing import List
 from uuid import UUID
 
 from app.core.domain.confianza_extraccion import ConfianzaExtraccion
 from app.core.domain.guia_aerea import  GuiaAerea
-from app.core.domain.guia_aerea_interviniente import GuiaAereaInterviniente
 from app.core.domain.guia_aerea_data_grid import GuiaAereaDataGrid
 from app.core.repository.confianza_extraccion_repository import ConfianzaExtraccionRepository
 from app.core.repository.document_repository import DocumentRepository
@@ -29,13 +30,14 @@ logger = logging.getLogger(__name__)
 
 class DocumentServiceImpl(DocumentService, ServiceBase):
 
-    def __init__(self, document_repository: DocumentRepository, guia_aerea_filtro_repository:GuiaAereaFiltroRepository , interviniente_service: IntervinienteService, confianza_extraccion_service: ConfianzaExtraccionService, confianza_extraccion_repository : ConfianzaExtraccionRepository, guia_aerea_interviniente_service: GuiaAereaIntervinienteService):
+    def __init__(self, document_repository: DocumentRepository, guia_aerea_filtro_repository:GuiaAereaFiltroRepository , interviniente_service: IntervinienteService, confianza_extraccion_service: ConfianzaExtraccionService, confianza_extraccion_repository : ConfianzaExtraccionRepository, guia_aerea_interviniente_service: GuiaAereaIntervinienteService, notificacion_service: NotificacionService):
         self.document_repository = document_repository
         self.guia_aerea_filtro_repository = guia_aerea_filtro_repository
         self.interviniente_service = interviniente_service
         self.confianza_extraccion_service = confianza_extraccion_service
         self.confianza_extraccion_repository = confianza_extraccion_repository
         self.guia_aerea_interviniente_service = guia_aerea_interviniente_service
+        self.notificacion_service = notificacion_service
 
     async def saveOrUpdate(self, t: GuiaAereaRequest):
         documento = None
@@ -202,15 +204,15 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
             guia_aerea.modificado = DateUtil.get_current_local_datetime()
             guia_aerea.modificado_por = self.session.full_name
             
-            
             await self.document_repository.save(guia_aerea)
-            await publish_document_update("INFO", f"Guía aérea N°{t.numero}: Actualizado correctamente! Procesando información adicional", t.guiaAereaId)
+            await publish_user_notification(self.session.user_id, "INFO", f"Guía aérea N°{t.numero}: Actualizado correctamente! Procesando información adicional", str(t.guiaAereaId))
             await self.guia_aerea_interviniente_service.saveAndReprocess(t)
-            await publish_document_update("INFO", f"Guía aérea N°{t.numero}: Información adicional procesada correctamente!", t.guiaAereaId)
-            await publish_document_update("SUCCESS", f"Guía aérea N°{t.numero}: Proceso de actualización finalizado correctamente.", t.guiaAereaId)
-       
+            await publish_user_notification(self.session.user_id, "INFO", f"Guía aérea N°{t.numero}: Información adicional procesada correctamente!", str(t.guiaAereaId))
+            await publish_user_notification(self.session.user_id, "SUCCESS", f"Guía aérea N°{t.numero}: Proceso de actualización finalizado correctamente.", str(t.guiaAereaId))
 
-        
+            await self.notificacion_service.resolver(guia_aerea.guia_aerea_id)
+           
+        return guia_aerea
 
 
     async def get_with_relations(self, documentoId: str):

@@ -157,6 +157,22 @@ class Constantes:
         GUIA_AEREA_REGISTROS = "VC001"
         GUIA_AEREA_REGISTROS_SUBSANAR = "VC002"
 
+    class EstadoNotificacion:
+        PENDIENTE = "ESTN001"
+        LEIDO = "ESTN002"
+        RESUELTO = "ESTN003"
+        ARCHIVADO = "ESTN004"
+
+    class TipoNotificacion:
+        OBSERVACION = "TPN001"
+        ANOMALIA = "TPN002"
+        RECORDATORIO = "TPN003"
+        
+    class SeveridadNotificacion:
+        INFO = "SVNT001"
+        WARNING = "SVNT002"
+        CRITICAL = "SVNT003"
+
 class Catalogo:
     VALORES_CONSTANTES = "VALORES_CONSTANTES"
     ESTADO_USUARIO = "ESTADO_USUARIO"

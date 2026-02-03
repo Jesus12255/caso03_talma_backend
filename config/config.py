@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     LLM_MODEL_NAME: str 
     DATABASE_URL: str
     REDIS_URL: str
+    CELERY_TASK_QUEUE: str = "document_queue"
     PASWORD_INICIAL: str
     
     GCS_BUCKET_NAME: str 

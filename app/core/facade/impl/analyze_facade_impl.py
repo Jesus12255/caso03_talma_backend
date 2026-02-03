@@ -14,7 +14,6 @@ class AnalyzeFacadeImpl(AnalyzeFacade):
         self.analyze_service = analyze_service
 
     async def upload(self, files: List[UploadFile]) -> StreamingResponse:
-        # 1. Leer y validar archivos ANTES de iniciar el stream (Eager Loading)
         files_data = await self.analyze_service.read_and_validate(files)
 
         async def event_stream() -> AsyncGenerator[str, None]:

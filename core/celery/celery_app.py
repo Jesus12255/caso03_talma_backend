@@ -16,9 +16,10 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
     task_routes={
-        "core.tasks.document_tasks.*": {"queue": "document_queue"},
+        "core.tasks.document_tasks.*": {"queue": settings.CELERY_TASK_QUEUE},
     },
     broker_connection_retry_on_startup=True,
+    task_default_queue=settings.CELERY_TASK_QUEUE,
 )
 
 if settings.REDIS_URL.startswith("rediss://"):
