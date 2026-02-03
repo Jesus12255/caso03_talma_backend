@@ -1,4 +1,5 @@
 
+from dto.guia_aerea_dtos import DeleteAllGuiaAereaRequest
 from app.core.services.notificacion_service import NotificacionService
 from core.realtime.publisher import publish_user_notification
 from typing import List
@@ -414,3 +415,6 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         guia_aerea.modificado_por = self.session.full_name
         await self.document_repository.save(guia_aerea)
 
+    async def deleteAll(self, request: DeleteAllGuiaAereaRequest):
+        for id in request.guiaAereaIds:
+            await self.delete(id)
