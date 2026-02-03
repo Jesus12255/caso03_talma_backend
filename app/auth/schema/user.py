@@ -22,6 +22,7 @@ class User(UserBase):
 class Token(BaseModel):
     access_token: str
     token_type: str
+    require_password_change: bool = False
 
 class UserForgotPassword(BaseModel):
     email: EmailStr
