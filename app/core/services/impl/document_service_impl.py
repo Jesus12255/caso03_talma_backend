@@ -107,8 +107,7 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
              filters.append(GuiaAereaDataGrid.fecha_consulta >= request.fechaInicioRegistro)
         if request.fechaFinRegistro:
              filters.append(GuiaAereaDataGrid.fecha_consulta <= request.fechaFinRegistro)
-        filters.append(GuiaAereaDataGrid.) 
-             
+          
         data, total_count = await self.guia_aerea_filtro_repository.find_data_grid(
             filters=filters,
             start=request.start,
