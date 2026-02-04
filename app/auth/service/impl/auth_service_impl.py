@@ -62,7 +62,13 @@ class AuthServiceImpl(AuthService):
                 "rol": user_orm.rol.nombre if user_orm.rol else None
             }, expires_delta=access_token_expires
         )
-        return Token(access_token=access_token, token_type="bearer")
+        
+        # Check if using default password
+        require_change = False
+        if user_in.password == settings.PASWORD_INICIAL:
+            require_change = True
+            
+        return Token(access_token=access_token, token_type="bearer", require_password_change=require_change)
 
     async def forgot_password(self, db: AsyncSession, email: str) -> str:
         # Check if user exists in DB
