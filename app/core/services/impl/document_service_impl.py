@@ -46,6 +46,7 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         documento.habilitado = Constantes.HABILITADO
         documento.creado = DateUtil.get_current_local_datetime()
         documento.creado_por = self.session.full_name
+        documento.usuario_id = self.session.user_id
         documento.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.PROCESANDO
         await self.document_repository.save(documento)
         t.guiaAereaId = documento.guia_aerea_id
@@ -107,7 +108,9 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
              filters.append(GuiaAereaDataGrid.fecha_consulta >= request.fechaInicioRegistro)
         if request.fechaFinRegistro:
              filters.append(GuiaAereaDataGrid.fecha_consulta <= request.fechaFinRegistro)
-          
+        if Constantes.Rol.OPERADOR == self.session.role_code:
+            filters.append(GuiaAereaDataGrid.usuario_id == self.session.user_id)
+            
         data, total_count = await self.guia_aerea_filtro_repository.find_data_grid(
             filters=filters,
             start=request.start,

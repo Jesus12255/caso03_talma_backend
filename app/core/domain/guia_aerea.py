@@ -101,6 +101,9 @@ class GuiaAerea(BaseModel):
 
     url = Column(Text)
 
+    usuario_id = Column(UUID(as_uuid=True), ForeignKey("usuario.usuario_id"), nullable=True)
+    usuario = relationship("Usuario")
+
     # Relationships
     intervinientes = relationship(
         "GuiaAereaInterviniente",

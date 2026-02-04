@@ -131,6 +131,12 @@ class Constantes:
         OBSERVACIONES = 0.01
 
 
+    class Rol: 
+        ADMINISTRADOR = "ROL001"
+        OPERADOR ="ROL002"
+        AUDITOR = "ROL003"
+
+
     class EstadoRegistroGuiaAereea: 
         PROCESANDO = "ESTGA001"
         OBSERVADO = "ESTGA002"

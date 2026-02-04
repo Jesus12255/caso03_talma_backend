@@ -265,6 +265,7 @@ class GuiaAereaDataGridResponse(BaseModel):
     habilitado: Optional[bool] = None
     fechaConsulta: Optional[datetime] = None
     url: Optional[str] = None
+    usuario: Optional[str] = None
 
 
 class GuiaAereaFiltroRequest(BaseRequest):
