@@ -14,6 +14,7 @@ import uuid
 from app.core.domain.base_model import BaseModel
 from sqlalchemy.orm import  relationship
 from app.core.domain.guia_aerea_interviniente import GuiaAereaInterviniente
+from app.core.domain.manifiesto import Manifiesto
 
 
 
@@ -111,3 +112,6 @@ class GuiaAerea(BaseModel):
         cascade="all, delete-orphan",
         primaryjoin="and_(GuiaAerea.guia_aerea_id==GuiaAereaInterviniente.guia_aerea_id, GuiaAereaInterviniente.es_version_activa==True)"
     )
+
+    manifiesto_id = Column(UUID(as_uuid=True), ForeignKey("manifiesto.manifiesto_id"), nullable=True)
+    manifiesto = relationship("Manifiesto", back_populates="guias")

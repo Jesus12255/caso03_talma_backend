@@ -1,4 +1,6 @@
+
 from app.core.dependencies.dependencies_notificacion import get_notificacion_service
+from app.core.repository.impl.manifiesto_repository_impl import ManifiestoRepositoryImpl
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies.dependencies_confianza_extraccion import get_confianza_extraccion_repository, get_confianza_extraccion_service
@@ -19,6 +21,9 @@ def get_document_repository(db: AsyncSession = Depends(get_db)):
 def get_guia_aerea_filtro_repository(db: AsyncSession = Depends(get_db)):
     return GuiaAereaFiltroRepositoryImpl(db)
 
+def get_manifiesto_repository(db: AsyncSession = Depends(get_db)):
+    return ManifiestoRepositoryImpl(db)
+
 def get_storage_service() -> StorageService:
     return GcpStorageServiceImpl()
 
@@ -29,14 +34,17 @@ def get_document_service(
     confianza_extraccion_service = Depends(get_confianza_extraccion_service), 
     confianza_extraccion_repository = Depends(get_confianza_extraccion_repository), 
     guia_aerea_interviniente_service = Depends(get_guia_aerea_interviniente_service),
-    notificacion_service = Depends(get_notificacion_service)):
+    notificacion_service = Depends(get_notificacion_service),
+    manifiesto_repository = Depends(get_manifiesto_repository)):
     return DocumentServiceImpl(repository,
     guia_aerea_filtro_repository,
     interviniente_service,
     confianza_extraccion_service,
     confianza_extraccion_repository,
     guia_aerea_interviniente_service,
-    notificacion_service)
+    notificacion_service,
+    manifiesto_repository
+    )
 
 def get_document_facade(service: DocumentService = Depends(get_document_service), guia_aerea_interviniente_service = Depends(get_guia_aerea_interviniente_service), storage_service = Depends(get_storage_service)):
     return DocumentFacadeImpl(service, guia_aerea_interviniente_service, storage_service)

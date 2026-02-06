@@ -15,6 +15,7 @@ class UserLogin(BaseModel):
 class User(UserBase):
     id: int | str
     is_active: bool = True
+    role: str | None = None
 
     class Config:
         from_attributes = True

@@ -58,3 +58,4 @@ class GuiaAereaDataGrid(Base):
     url = Column(String)
     usuario_id = Column(UUID(as_uuid=True))
     usuario = Column(String)
+    manifiesto_id = Column(UUID(as_uuid=True))
