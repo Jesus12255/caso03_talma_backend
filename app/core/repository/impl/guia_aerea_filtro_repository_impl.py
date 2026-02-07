@@ -25,3 +25,16 @@ class GuiaAereaFiltroRepositoryImpl(BaseRepositoryImpl[GuiaAereaDataGrid], GuiaA
 
         result = await self.db.execute(query)
         return result.scalars().all(), total_count
+
+    async def find_by_ids(self, ids: list[str]) -> list[GuiaAereaDataGrid]:
+        if not ids:
+            return []
+        query = select(GuiaAereaDataGrid).where(GuiaAereaDataGrid.guia_aerea_id.in_(ids))
+        result = await self.db.execute(query)
+        res = result.scalars().all()
+        return res
+
+    async def find_by_manifiesto_id(self, manifiesto_id: str) -> list[GuiaAereaDataGrid]:
+        query = select(GuiaAereaDataGrid).where(GuiaAereaDataGrid.manifiesto_id == manifiesto_id)
+        result = await self.db.execute(query)
+        return result.scalars().all()

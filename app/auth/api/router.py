@@ -47,7 +47,16 @@ async def reset_password(user: UserResetPassword, db: AsyncSession = Depends(get
          return {"message": "Password reset successfully"}
     raise HTTPException(status_code=400, detail="Failed to reset password")
 
+from app.auth.dependencies.dependencies_auth import get_current_user as auth_dep
+from core.context.user_context import get_user_session
+
 @router.get("/me", response_model=User)
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    # TODO: Implement get_current_user_by_token in service if needed for realauth
-    return User(id=1, email="test@example.com", full_name="Test User", is_active=True)
+async def get_me(email: str = Depends(auth_dep)):
+    session = get_user_session()
+    return User(
+        id=session.user_id,
+        email=session.email,
+        full_name=session.full_name,
+        role=session.role_code,
+        is_active=True
+    )

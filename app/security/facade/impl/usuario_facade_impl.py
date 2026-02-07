@@ -7,6 +7,7 @@ from core.exceptions import AppBaseException
 from dto.universal_dto import BaseOperacionResponse, ComboBaseResponse
 from dto.usuario_dtos import UsuarioCambioPasswordRequest, UsuarioComboResponse, UsuarioRequest, UsuarioResponse, UsuarioFiltroRequest, UsuarioFiltroResponse, UsuarioStatusRequest
 from dto.collection_response import CollectionResponse
+from dto.menu_dtos import MenuResponse
 from utl.generic_util import Constantes
 
 
@@ -55,3 +56,6 @@ class UsuarioFacadeImpl(UsuarioFacade):
             return AppBaseException(codigo="400", mensaje="Las contraseñas no coinciden")
         await self.usuario_service.updatePassword(request)
         return BaseOperacionResponse(codigo="200", mensaje="Se cambió la contraseña correctamente")
+
+    async def loadMenu(self) -> MenuResponse:
+        return await self.usuario_service.load_menu()
