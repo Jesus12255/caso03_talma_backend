@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from dto.collection_response import CollectionResponse
 from dto.universal_dto import BaseOperacionResponse
 from dto.usuario_dtos import UsuarioCambioPasswordRequest, UsuarioComboResponse, UsuarioFiltroRequest, UsuarioRequest, UsuarioResponse, UsuarioFiltroResponse, UsuarioStatusRequest
+from dto.menu_dtos import MenuResponse
 
 
 class UsuarioFacade(ABC):
@@ -33,4 +34,8 @@ class UsuarioFacade(ABC):
 
     @abstractmethod
     async def updatePassword(self, request: UsuarioCambioPasswordRequest) -> BaseOperacionResponse:
+        pass
+
+    @abstractmethod
+    async def loadMenu(self) -> MenuResponse:
         pass

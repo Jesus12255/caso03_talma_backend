@@ -1,10 +1,11 @@
+from core.service.service_base import ServiceBase
+from app.security.repository.menu_repository import MenuRepository
 from app.security.domain import Usuario
 from core.exceptions import  AppBaseException, NotFoundException
 from fastapi import status
 from app.security.repository.usuario_repository import UsuarioRepository
 from app.security.service.usuario_service import UsuarioService
 from config.mapper import Mapper
-from core.facade.facade_base import FacadeBase
 from dto.universal_dto import BaseOperacionResponse
 from dto.usuario_dtos import UsuarioCambioPasswordRequest, UsuarioRequest, UsuarioFiltroRequest, UsuarioFiltroResponse, UsuarioStatusRequest
 from dto.collection_response import CollectionResponse
@@ -16,15 +17,20 @@ from app.core.services.email_service import EmailService
 
 import asyncio
 
-class UsuarioServiceImpl(UsuarioService, FacadeBase):
+from app.security.repository.impl.menu_repository_impl import MenuRepositoryImpl
+from app.security.domain.menu_maestro import MenuMaestro
+from dto.menu_dtos import MenuDto, MenuResponse
+from typing import List
 
-    def __init__(self, usuario_repository: UsuarioRepository, modelMapper: Mapper, email_service: EmailService):
+class UsuarioServiceImpl(UsuarioService, ServiceBase):
+
+    def __init__(self, usuario_repository: UsuarioRepository, menu_repository: MenuRepository, modelMapper: Mapper, email_service: EmailService):
         self.usuario_repository = usuario_repository
+        self.menu_repository = menu_repository
         self.modelMapper = modelMapper
         self.email_service = email_service
 
     async def saveOrUpdate(self, t: UsuarioRequest) -> None:
-
         if GenericUtil.no_es_nulo(t, "usuarioId"):
             usuario = await self.get(t.usuarioId)
             if t.rolId: 
@@ -116,6 +122,47 @@ class UsuarioServiceImpl(UsuarioService, FacadeBase):
         usuario.modificado = DateUtil.get_current_local_datetime()
         usuario.modificado_por = self.session.full_name
         await self.usuario_repository.save(usuario)
+        return BaseOperacionResponse(codigo=status.HTTP_200_OK, mensaje="Contraseña actualizada correctamente")
+
+    async def load_menu(self) -> MenuResponse:
+        menus = await self.menu_repository.find_by_rol_id(self.session.role_id)
+        menu_dtos = self._build_menu_hierarchy(menus)
+        return MenuResponse(menus=menu_dtos)
+
+    def _build_menu_hierarchy(self, menus: List[MenuMaestro]) -> List[MenuDto]:
+        menu_map = {}
+        for m in menus:
+             dto = MenuDto(
+                 menuId=str(m.menu_maestro_id),
+                 nombre=m.nombre,
+                 descripcion=m.descripcion,
+                 url=m.url,
+                 icono=m.icono,
+                 orden=m.orden,
+                 referenciaId=str(m.referencia_id) if m.referencia_id else None,
+                 submenus=[],
+                 habilitado=m.habilitado
+             )
+             menu_map[str(m.menu_maestro_id)] = dto
+             
+        root_menus = []
+        
+        for m in menus:
+            dto = menu_map[str(m.menu_maestro_id)]
+            if m.referencia_id:
+                parent_id = str(m.referencia_id)
+                if parent_id in menu_map:
+                    menu_map[parent_id].submenus.append(dto)
+                else:
+                    root_menus.append(dto)
+            else:
+                root_menus.append(dto)
+                
+        for dto in menu_map.values():
+            dto.submenus.sort(key=lambda x: x.orden)
+            
+        root_menus.sort(key=lambda x: x.orden)
+        return root_menus
 
 
 

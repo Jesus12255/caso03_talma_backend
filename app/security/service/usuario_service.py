@@ -23,3 +23,7 @@ class UsuarioService(ABC):
     @abstractmethod
     async def updatePassword(self, request: UsuarioCambioPasswordRequest):
         pass
+
+    @abstractmethod
+    async def load_menu(self) -> None: # It returns MenuResponse but for abstract check it's fine or explicit
+        pass

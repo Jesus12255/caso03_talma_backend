@@ -131,6 +131,12 @@ class Constantes:
         OBSERVACIONES = 0.01
 
 
+    class Rol: 
+        ADMINISTRADOR = "ROL001"
+        OPERADOR ="ROL002"
+        AUDITOR = "ROL003"
+
+
     class EstadoRegistroGuiaAereea: 
         PROCESANDO = "ESTGA001"
         OBSERVADO = "ESTGA002"
@@ -172,6 +178,13 @@ class Constantes:
         INFO = "SVNT001"
         WARNING = "SVNT002"
         CRITICAL = "SVNT003"
+    
+    class EstadoManifiesto:
+        BORRADOR = "ESTMN005"
+        VALIDADO = "ESTMN004"
+        ENVIADO = "ESTMN001"
+        ACEPTADO = "ESTMN002"
+        RECHAZADO = "ESTMN003"
 
 class Catalogo:
     VALORES_CONSTANTES = "VALORES_CONSTANTES"
@@ -194,6 +207,7 @@ class Catalogo:
     GRADO_ESTUDIOS = "GRADO_ESTUDIOS"
     TIPO_SANGRE = "TIPO_SANGRE"
     TIPO_ALTERNATIVA = "TIPO_ALTERNATIVA"
+    ESTADO_MANIFIESTO = "ESTADO_MANIFIESTO"
 
     def __init__(self):
         raise RuntimeError("Catalogo is a constants-only class")

@@ -1,3 +1,4 @@
+from core.facade.facade_base import FacadeBase
 from dto.guia_aerea_dtos import DeleteAllGuiaAereaRequest
 import json
 import logging
@@ -23,7 +24,7 @@ from utl.generic_util import GenericUtil
 
 logger = logging.getLogger(__name__)
 
-class DocumentFacadeImpl(DocumentFacade):
+class DocumentFacadeImpl(DocumentFacade, FacadeBase):
 
     def __init__(self, document_service: DocumentService, guia_aerea_interviniente_service: GuiaAereaIntervinienteService, storage_service: StorageService):
         self.document_service = document_service
@@ -190,3 +191,5 @@ class DocumentFacadeImpl(DocumentFacade):
     async def deleteAll(self, request: DeleteAllGuiaAereaRequest) -> BaseOperacionResponse:
         await self.document_service.deleteAll(request)
         return BaseOperacionResponse(codigo="200", mensaje="Registros eliminados correctamente.")
+
+   

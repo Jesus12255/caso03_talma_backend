@@ -16,6 +16,9 @@ def setup_routes(app: FastAPI):
     from app.core.api import notificacion_router
     app.include_router(notificacion_router.router, prefix="/notificaciones", tags=["Notificaciones"], dependencies=[Depends(get_current_user)])
     
+    from app.core.api import trama_router
+    app.include_router(trama_router.router, prefix="/tramas", tags=["Tramas"], dependencies=[Depends(get_current_user)])
+    
     from core.realtime import websocket
     app.include_router(websocket.router, prefix="/documents", tags=["WebSockets"])
     setup_exception_handlers(app)

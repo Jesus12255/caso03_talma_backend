@@ -30,22 +30,31 @@ async def _process_validations_async(obj_req: str):
             t = GuiaAereaRequest.model_validate(json.loads(obj_req)) 
             from utl.date_util import DateUtil 
  
+            from app.core.repository.impl.manifiesto_repository_impl import ManifiestoRepositoryImpl
+            from app.core.services.impl.manifiesto_service_impl import ManifiestoServiceImpl
+            
+            manifiesto_repository = ManifiestoRepositoryImpl(db)
             notificacion_repository = NotificacionRepositoryImpl(db)
             notificacion_service = NotificacionServiceImpl(notificacion_repository)
+            
             guia_aerea_interviniente_repository = GuiaAereaIntervinienteRepositoryImpl(db)
             confianza_extraccion_repository = ConfianzaExtraccionRepositoryImpl(db)
             guia_aerea_interviniente_service = GuiaAereaIntervinienteServiceImpl(guia_aerea_interviniente_repository, confianza_extraccion_repository)
+            
             guia_aerea_repository = DocumentRepositoryImpl(db)
             guia_aerea_filtro_repository = GuiaAereaFiltroRepositoryImpl(db)
             interviniente_repository = IntervinienteRepositoryImpl(db)
-            confianza_extraccion_repository = ConfianzaExtraccionRepositoryImpl(db)
             interviniente_service = IntervinienteServiceImpl(interviniente_repository)
             conf_service = ConfianzaExtraccionServiceImpl(confianza_extraccion_repository)
-            guia_aerea_service = DocumentServiceImpl(guia_aerea_repository, guia_aerea_filtro_repository, interviniente_service, conf_service, confianza_extraccion_repository, guia_aerea_interviniente_service, notificacion_service)
+
+            guia_aerea_service = DocumentServiceImpl(guia_aerea_repository, guia_aerea_filtro_repository, interviniente_service, conf_service, confianza_extraccion_repository, guia_aerea_interviniente_service, notificacion_service, manifiesto_repository)
+            
+            manifiesto_service = ManifiestoServiceImpl(manifiesto_repository, guia_aerea_service)
+            
             
             
             await guia_aerea_service.save_all_confianza_extraccion(t)
-            await guia_aerea_service.save_all_confianza_extraccion(t)
+            # Removed duplicate call
             await publish_user_notification(str(t.usuarioId), "INFO", f"Guía aérea N°{t.numero}: Confianzas recibidas", str(t.guiaAereaId))
 
             await guia_aerea_interviniente_service.save(t)
@@ -56,6 +65,7 @@ async def _process_validations_async(obj_req: str):
 
             if doc:
                 if Constantes.EstadoRegistroGuiaAereea.OBSERVADO != doc.estado_registro_codigo : 
+                    await manifiesto_service.associate_guia(doc)
                     await publish_user_notification(str(t.usuarioId), "SUCCESS", f"Guía aérea N°{t.numero}: Procesado correctamente", str(t.guiaAereaId))
                 else:
                     logger.info(f"Documento Observado. Creando notificación para usuario {t.usuarioId}...")

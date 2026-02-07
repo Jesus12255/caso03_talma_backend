@@ -56,3 +56,6 @@ class GuiaAereaDataGrid(Base):
     habilitado = Column(Boolean)
     fecha_consulta = Column(TIMESTAMP(timezone=False))
     url = Column(String)
+    usuario_id = Column(UUID(as_uuid=True))
+    usuario = Column(String)
+    manifiesto_id = Column(UUID(as_uuid=True))

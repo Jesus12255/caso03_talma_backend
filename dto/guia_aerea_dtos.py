@@ -265,6 +265,7 @@ class GuiaAereaDataGridResponse(BaseModel):
     habilitado: Optional[bool] = None
     fechaConsulta: Optional[datetime] = None
     url: Optional[str] = None
+    usuario: Optional[str] = None
 
 
 class GuiaAereaFiltroRequest(BaseRequest):
@@ -280,7 +281,11 @@ class GuiaAereaFiltroRequest(BaseRequest):
     habilitado: Optional[bool] = None
     fechaInicioRegistro: Optional[datetime] = None
     fechaFinRegistro: Optional[datetime] = None
+    fechaInicioRegistro: Optional[datetime] = None
+    fechaFinRegistro: Optional[datetime] = None
     vistaCodigo: Optional[str] = None
+    numeroVuelo: Optional[str] = None
+    aerolineaCodigo: Optional[str] = None
 
 
 class GuiaAereaComboResponse(BaseModel):
@@ -291,3 +296,4 @@ class GuiaAereaComboResponse(BaseModel):
 class DeleteAllGuiaAereaRequest(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     guiaAereaIds: Optional[List[UUID]] = None
+

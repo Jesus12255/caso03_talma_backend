@@ -1,9 +1,13 @@
+
+from dto.guia_aerea_dtos import GuiaAereaDataGridResponse
+from dto.collection_response import CollectionResponse
+from app.core.domain.guia_aerea_data_grid import GuiaAereaDataGrid
 from dto.guia_aerea_dtos import DeleteAllGuiaAereaRequest
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import List
 from uuid import UUID
 from app.core.domain.guia_aerea import GuiaAerea
-from dto.guia_aerea_dtos import  GuiaAereaFiltroRequest, GuiaAereaRequest, GuiaAereaSubsanarRequest
+from dto.guia_aerea_dtos import GuiaAereaFiltroRequest,   GuiaAereaRequest, GuiaAereaSubsanarRequest
 
 
 class DocumentService(ABC):
@@ -17,7 +21,7 @@ class DocumentService(ABC):
         pass
 
     @abstractmethod
-    async def find(self, request: GuiaAereaFiltroRequest) -> tuple[Any, int]:
+    async def find(self, request: GuiaAereaFiltroRequest) -> tuple[List[GuiaAereaDataGrid], int]:
         pass
 
     @abstractmethod
@@ -38,4 +42,12 @@ class DocumentService(ABC):
 
     @abstractmethod
     async def deleteAll(self, request: DeleteAllGuiaAereaRequest):
+        pass
+        
+    @abstractmethod
+    async def associate_guia(self, t: GuiaAerea):
+        pass
+
+    @abstractmethod
+    async def setManifiesto(self, manifiesto_id: UUID, guia_aerea_id: UUID):
         pass
