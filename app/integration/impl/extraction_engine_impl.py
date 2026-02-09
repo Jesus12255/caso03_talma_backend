@@ -38,6 +38,27 @@ REGLAS DE ORO:
 6. Devuelve SIEMPRE una lista (array) JSON.
 7. Genera objetos separados si detectas múltiples guías ("MASTER AWB NO") diferentes.
 
+**REGLA CRÍTICA SOBRE CONFIANZAS DE INTERVINIENTES:**
+8. Para CADA interviniente (remitente y consignatario), DEBES generar confianzas para TODOS estos campos:
+   - remitente.nombre (OBLIGATORIO)
+   - remitente.direccion (OBLIGATORIO)
+   - remitente.ciudad (OBLIGATORIO)
+   - remitente.paisCodigo (OBLIGATORIO)
+   - remitente.telefono (OBLIGATORIO si está visible, omitir si no)
+   - remitente.tipoDocumentoCodigo (OBLIGATORIO si está visible, omitir si no)
+   - remitente.numeroDocumento (OBLIGATORIO si está visible, omitir si no)
+   
+   Y lo mismo para consignatario:   
+   - consignatario.nombre (OBLIGATORIO)
+   - consignatario.direccion (OBLIGATORIO)
+   - consignatario.ciudad (OBLIGATORIO)
+   - consignatario.paisCodigo (OBLIGATORIO)
+   - consignatario.telefono (OBLIGATORIO si está visible, omitir si no)
+   - consignatario.tipoDocumentoCodigo (OBLIGATORIO si está visible, omitir si no)
+   - consignatario.numeroDocumento (OBLIGATORIO si está visible, omitir si no)
+   
+   **NUNCA omitas estas confianzas**. Si el campo está presente en el documento, genera su confianza.
+
 ESTRATEGIA DE INFERENCIA PARA DATOS SIN ETIQUETAS (CRÍTICO):
 A menudo, las guías no tienen títulos de campo ("Shipper", "Consignee", "Weight"), solo valores en posiciones estándar.
 Usa tu conocimiento del formato IATA Air Waybill para inferir qué es cada dato:
@@ -158,14 +179,16 @@ Estructura esperada:
             { "nombreCampo": "remitente.direccion", "valorExtraido": "Av. Los Talleres 789", "confidenceModelo": 0.90 },
             { "nombreCampo": "remitente.ciudad", "valorExtraido": "Callao", "confidenceModelo": 0.92 },
             { "nombreCampo": "remitente.paisCodigo", "valorExtraido": "PE", "confidenceModelo": 0.96 },
-            { "nombreCampo": "remitente.numeroDocumento", "valorExtraido": "20432109876", "confidenceModelo": 0.95 },
             { "nombreCampo": "remitente.telefono", "valorExtraido": "+51 987654321", "confidenceModelo": 0.89 },
+            { "nombreCampo": "remitente.tipoDocumentoCodigo", "valorExtraido": "RUC", "confidenceModelo": 0.93 },
+            { "nombreCampo": "remitente.numeroDocumento", "valorExtraido": "20432109876", "confidenceModelo": 0.95 },
 
             { "nombreCampo": "consignatario.nombre", "valorExtraido": "Nordic Industrial Equipment AB", "confidenceModelo": 0.94 },
             { "nombreCampo": "consignatario.direccion", "valorExtraido": "Västra Hamngatan 12", "confidenceModelo": 0.90 },
             { "nombreCampo": "consignatario.ciudad", "valorExtraido": "Gothenburg", "confidenceModelo": 0.92 },
             { "nombreCampo": "consignatario.paisCodigo", "valorExtraido": "SE", "confidenceModelo": 0.96 },
             { "nombreCampo": "consignatario.telefono", "valorExtraido": "+46 317889900", "confidenceModelo": 0.88 },
+            { "nombreCampo": "consignatario.tipoDocumentoCodigo", "valorExtraido": "VAT_ID", "confidenceModelo": 0.92 },
             { "nombreCampo": "consignatario.numeroDocumento", "valorExtraido": "SE55667788", "confidenceModelo": 0.91 }
         ]
     }
@@ -278,7 +301,9 @@ Formato requerido:
                 
                 if response.text:
                     text = response.text.strip()
-                    logger.debug(f"AI Raw Response for {start_index}: {text[:300]}...")
+                    logger.info(f"========== AI RESPONSE COMPLETA PARA INDEX {start_index} ==========")
+                    logger.info(f"Respuesta completa de IA:\n{text}")
+                    logger.info(f"========== FIN AI RESPONSE ==========")
                     
                     if text.startswith("```"):
                         lines = text.splitlines()
@@ -307,6 +332,14 @@ Formato requerido:
                         if not isinstance(item, dict): continue
                         if "document_index" not in item: item["document_index"] = start_index
                         if "document_name" not in item: item["document_name"] = f"Documento {start_index}"
+                        
+                        # Log de intervinientes y confianzas
+                        if "intervinientes" in item:
+                            logger.info(f"Intervinientes extraídos: {json.dumps(item['intervinientes'], indent=2, ensure_ascii=False)}")
+                        if "confianzas" in item:
+                            logger.info(f"Confianzas extraídas ({len(item['confianzas'])} campos):")
+                            for conf in item['confianzas']:
+                                logger.info(f"  - {conf.get('nombreCampo')}: {conf.get('confidenceModelo')}")
                         
                         # Fix: Si la IA devuelve la estructura plana, la respetamos
                         # No envolvemos forzosamente en 'fields'
