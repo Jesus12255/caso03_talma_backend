@@ -15,6 +15,9 @@ from utl.constantes import Constantes
 from utl.date_util import DateUtil
 import re
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class GuiaAereaIntervinienteServiceImpl( GuiaAereaIntervinienteService, ServiceBase):
@@ -24,6 +27,13 @@ class GuiaAereaIntervinienteServiceImpl( GuiaAereaIntervinienteService, ServiceB
         self.confianza_extraccion_repository = confianza_extraccion_repository
 
     async def save(self, request: GuiaAereaRequest):
+        
+        logger.info(f"========== GUARDANDO INTERVINIENTES ==========")
+        logger.info(f"Total de confianzas en request: {len(request.confianzas) if request.confianzas else 0}")
+        if request.confianzas:
+            logger.info("Confianzas recibidas en request:")
+            for conf in request.confianzas:
+                logger.info(f"  - {conf.nombreCampo}: {conf.confidenceModelo}")
 
         remitente_req = self._find_interviniente(request.intervinientes, Constantes.TipoInterviniente.REMITENTE)
         consignatario_req = self._find_interviniente(request.intervinientes, Constantes.TipoInterviniente.CONSIGNATARIO)
@@ -94,6 +104,29 @@ class GuiaAereaIntervinienteServiceImpl( GuiaAereaIntervinienteService, ServiceB
         guia_aerea_interviniente.habilitado = Constantes.HABILITADO
         guia_aerea_interviniente.creado = DateUtil.get_current_local_datetime()
         guia_aerea_interviniente.creado_por = Constantes.SYSTEM_USER
+        
+        # Assign confidence values to entity fields
+        nombre_conf = self._get_confidence(f"{prefijo}.nombre", confianzas)
+        if nombre_conf: guia_aerea_interviniente.confidence_nombre = nombre_conf.confidenceModelo
+        
+        direccion_conf = self._get_confidence(f"{prefijo}.direccion", confianzas)
+        if direccion_conf: guia_aerea_interviniente.confidence_direccion = direccion_conf.confidenceModelo
+        
+        ciudad_conf = self._get_confidence(f"{prefijo}.ciudad", confianzas)
+        if ciudad_conf: guia_aerea_interviniente.confidence_ciudad = ciudad_conf.confidenceModelo
+        
+        pais_conf = self._get_confidence(f"{prefijo}.paisCodigo", confianzas)
+        if pais_conf: guia_aerea_interviniente.confidence_pais_codigo = pais_conf.confidenceModelo
+        
+        telefono_conf = self._get_confidence(f"{prefijo}.telefono", confianzas)
+        if telefono_conf: guia_aerea_interviniente.confidence_telefono = telefono_conf.confidenceModelo
+        
+        tipo_doc_conf = self._get_confidence(f"{prefijo}.tipoDocumentoCodigo", confianzas)
+        if tipo_doc_conf: guia_aerea_interviniente.confidence_tipo_documento_codigo = tipo_doc_conf.confidenceModelo
+        
+        num_doc_conf = self._get_confidence(f"{prefijo}.numeroDocumento", confianzas)
+        if num_doc_conf: guia_aerea_interviniente.confidence_numero_documento = num_doc_conf.confidenceModelo
+        
         await self.guia_aerea_interviniente_repository.save(guia_aerea_interviniente)
         
         confianzas_extraccion = []
@@ -101,8 +134,9 @@ class GuiaAereaIntervinienteServiceImpl( GuiaAereaIntervinienteService, ServiceB
         confianzas_extraccion.append(self._save_confianza_extraccion(guia_aerea_interviniente, tipo, confianzas, f"{prefijo}.direccion"))
         confianzas_extraccion.append(self._save_confianza_extraccion(guia_aerea_interviniente, tipo, confianzas, f"{prefijo}.ciudad"))
         confianzas_extraccion.append(self._save_confianza_extraccion(guia_aerea_interviniente, tipo, confianzas, f"{prefijo}.paisCodigo"))
-        confianzas_extraccion.append(self._save_confianza_extraccion(guia_aerea_interviniente, tipo, confianzas, f"{prefijo}.numeroDocumento"))
         confianzas_extraccion.append(self._save_confianza_extraccion(guia_aerea_interviniente, tipo, confianzas, f"{prefijo}.telefono"))
+        confianzas_extraccion.append(self._save_confianza_extraccion(guia_aerea_interviniente, tipo, confianzas, f"{prefijo}.tipoDocumentoCodigo"))
+        confianzas_extraccion.append(self._save_confianza_extraccion(guia_aerea_interviniente, tipo, confianzas, f"{prefijo}.numeroDocumento"))
         await self.confianza_extraccion_repository.save_all(confianzas_extraccion)
 
     def _find_interviniente(self, intervinientes: List[IntervinienteRequest], rol_codigo: str ) -> IntervinienteRequest:
@@ -139,11 +173,16 @@ class GuiaAereaIntervinienteServiceImpl( GuiaAereaIntervinienteService, ServiceB
 
     def _get_confidence( self, field_name: str, confianzas: Optional[List[GuiaAereaConfianzaRequest]]) -> Optional[GuiaAereaConfianzaRequest]:
         target = field_name.lower().strip()
-        if not confianzas: return None
+        logger.debug(f"Buscando confianza para campo: '{field_name}' (normalizado: '{target}')")
+        if not confianzas: 
+            logger.debug(f"  No hay confianzas en el request")
+            return None
 
         for c in confianzas:
             if not c: continue
             if c.nombreCampo and c.nombreCampo.lower().strip() == target:
+                logger.debug(f"  ✓ Encontrado: {c.nombreCampo} = {c.confidenceModelo}")
                 return c
+        logger.debug(f"  ✗ No encontrado para '{field_name}'")
         return None
 
