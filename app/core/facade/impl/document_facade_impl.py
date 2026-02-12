@@ -38,6 +38,12 @@ class DocumentFacadeImpl(DocumentFacade, FacadeBase):
             request = self.validate_request(requestForm)
 
             for tt in request:
+                if "usuarioId" in tt and tt["usuarioId"] and isinstance(tt["usuarioId"], str):
+                    try:
+                        tt["usuarioId"] = UUID(tt["usuarioId"])
+                    except ValueError:
+                        pass # Dejar que Pydantic o el validador maneje el error si no es UUID válido
+                
                 obj_req = GuiaAereaRequest.model_validate(tt)
                 self.validar_campos_requeridos_guia_aerea(obj_req)
                 await self.document_service.saveOrUpdate(obj_req)

@@ -1,3 +1,6 @@
+from app.core.repository.impl.audit_filtro_repository_impl import AuditFiltroRepositoryImpl
+from app.core.services.impl.audit_service_impl import AuditServiceImpl
+from app.core.repository.impl.audit_repository_impl import AuditRepositoryImpl
 from dto.notificacion import NotificacionRequest
 from app.core.services.impl.notificacion_service_impl import NotificacionServiceImpl
 from app.core.repository.impl.notificacion_repository_impl import NotificacionRepositoryImpl
@@ -18,7 +21,7 @@ from app.core.services.impl.document_service_impl import DocumentServiceImpl
 from app.core.services.impl.interviniente_service_impl import IntervinienteServiceImpl
 from app.core.services.impl.confianza_extraccion_service_impl import ConfianzaExtraccionServiceImpl
 from dto.guia_aerea_dtos import GuiaAereaRequest
-from core.realtime.publisher import publish_document_update, publish_user_notification
+from core.realtime.publisher import  publish_user_notification
 from utl.constantes import Constantes
 
 logger = logging.getLogger(__name__)
@@ -32,6 +35,10 @@ async def _process_validations_async(obj_req: str):
  
             from app.core.repository.impl.manifiesto_repository_impl import ManifiestoRepositoryImpl
             from app.core.services.impl.manifiesto_service_impl import ManifiestoServiceImpl
+
+            auditoria_repository = AuditRepositoryImpl(db)
+            auditoria_filtro_repository = AuditFiltroRepositoryImpl(db)
+            auditoria_service = AuditServiceImpl(auditoria_repository, auditoria_filtro_repository)
             
             manifiesto_repository = ManifiestoRepositoryImpl(db)
             notificacion_repository = NotificacionRepositoryImpl(db)
@@ -47,7 +54,7 @@ async def _process_validations_async(obj_req: str):
             interviniente_service = IntervinienteServiceImpl(interviniente_repository)
             conf_service = ConfianzaExtraccionServiceImpl(confianza_extraccion_repository)
 
-            guia_aerea_service = DocumentServiceImpl(guia_aerea_repository, guia_aerea_filtro_repository, interviniente_service, conf_service, confianza_extraccion_repository, guia_aerea_interviniente_service, notificacion_service, manifiesto_repository)
+            guia_aerea_service = DocumentServiceImpl(guia_aerea_repository, guia_aerea_filtro_repository, interviniente_service, conf_service, confianza_extraccion_repository, guia_aerea_interviniente_service, notificacion_service, manifiesto_repository, auditoria_service)
             
             manifiesto_service = ManifiestoServiceImpl(manifiesto_repository, guia_aerea_service)
             
@@ -67,6 +74,14 @@ async def _process_validations_async(obj_req: str):
                 if Constantes.EstadoRegistroGuiaAereea.OBSERVADO != doc.estado_registro_codigo : 
                     await manifiesto_service.associate_guia(doc)
                     await publish_user_notification(str(t.usuarioId), "SUCCESS", f"Guía aérea N°{t.numero}: Procesado correctamente", str(t.guiaAereaId))
+                    await auditoria_service.registrar_modificacion(
+                        entidad_tipo=Constantes.TipoEntidadAuditoria.GUIA_AEREA,
+                        entidad_id=t.guiaAereaId,
+                        numero_documento=t.numero,
+                        campo="estado_registro_codigo",
+                        valor_anterior="PROCESANDO",
+                        valor_nuevo="PROCESADO"
+                    ) 
                 else:
                     logger.info(f"Documento Observado. Creando notificación para usuario {t.usuarioId}...")
                     notificacion_request = NotificacionRequest(
@@ -79,6 +94,14 @@ async def _process_validations_async(obj_req: str):
                         severidadCodigo=Constantes.SeveridadNotificacion.CRITICAL
                     )
                     await notificacion_service.save(notificacion_request)
+                    await auditoria_service.registrar_modificacion(
+                        entidad_tipo=Constantes.TipoEntidadAuditoria.GUIA_AEREA,
+                        entidad_id=t.guiaAereaId,
+                        numero_documento=t.numero,
+                        campo="estado_registro_codigo",
+                        valor_anterior="PROCESANDO",
+                        valor_nuevo="OBSERVADO"
+                    ) 
 
         except Exception as e:
             doc_id = t.guiaAereaId if t else "Desconocido"

@@ -186,6 +186,16 @@ class Constantes:
         ACEPTADO = "ESTMN002"
         RECHAZADO = "ESTMN003"
 
+    class TipoEntidadAuditoria: 
+        GUIA_AEREA = "TPEAD001"
+
+    class TipoAccionAuditoria: 
+        CREADO = "ACCAD001"
+        MODIFICADO = "ACCAD002"
+        CAMBIO_ESTADO = "ACCAD003"
+        VALIDACION = "ACCAD004"
+        OBSERVACION = "ACCAD005"
+
 class Catalogo:
     VALORES_CONSTANTES = "VALORES_CONSTANTES"
     ESTADO_USUARIO = "ESTADO_USUARIO"
@@ -208,6 +218,8 @@ class Catalogo:
     TIPO_SANGRE = "TIPO_SANGRE"
     TIPO_ALTERNATIVA = "TIPO_ALTERNATIVA"
     ESTADO_MANIFIESTO = "ESTADO_MANIFIESTO"
+    TIPO_ENTIDAD_AUDITORIA = "TIPO_ENTIDAD_AUDITORIA"
+    ACCION_AUDITORIA = "ACCION_AUDITORIA"
 
     def __init__(self):
         raise RuntimeError("Catalogo is a constants-only class")

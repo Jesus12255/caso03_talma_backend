@@ -19,6 +19,9 @@ def setup_routes(app: FastAPI):
     from app.core.api import trama_router
     app.include_router(trama_router.router, prefix="/tramas", tags=["Tramas"], dependencies=[Depends(get_current_user)])
     
+    from app.core.api import audit_router
+    app.include_router(audit_router.router, prefix="/audit", tags=["Audit"], dependencies=[Depends(get_current_user)])
+    
     from core.realtime import websocket
     app.include_router(websocket.router, prefix="/documents", tags=["WebSockets"])
     setup_exception_handlers(app)

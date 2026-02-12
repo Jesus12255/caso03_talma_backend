@@ -5,6 +5,7 @@ import uuid
 from app.core.domain.manifiesto import Manifiesto
 from dto.guia_aerea_dtos import DeleteAllGuiaAereaRequest
 from app.core.services.notificacion_service import NotificacionService
+from app.core.services.audit_service import AuditService
 from core.realtime.publisher import publish_user_notification
 from typing import List
 from uuid import UUID
@@ -35,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 class DocumentServiceImpl(DocumentService, ServiceBase):
 
-    def __init__(self, document_repository: DocumentRepository, guia_aerea_filtro_repository:GuiaAereaFiltroRepository , interviniente_service: IntervinienteService, confianza_extraccion_service: ConfianzaExtraccionService, confianza_extraccion_repository : ConfianzaExtraccionRepository, guia_aerea_interviniente_service: GuiaAereaIntervinienteService, notificacion_service: NotificacionService, manifiesto_repository: ManifiestoRepository):
+    def __init__(self, document_repository: DocumentRepository, guia_aerea_filtro_repository:GuiaAereaFiltroRepository , interviniente_service: IntervinienteService, confianza_extraccion_service: ConfianzaExtraccionService, confianza_extraccion_repository : ConfianzaExtraccionRepository, guia_aerea_interviniente_service: GuiaAereaIntervinienteService, notificacion_service: NotificacionService, manifiesto_repository: ManifiestoRepository, audit_service: AuditService):
         self.document_repository = document_repository
         self.guia_aerea_filtro_repository = guia_aerea_filtro_repository
         self.interviniente_service = interviniente_service
@@ -44,6 +45,7 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         self.guia_aerea_interviniente_service = guia_aerea_interviniente_service
         self.notificacion_service = notificacion_service
         self.manifiesto_repository = manifiesto_repository
+        self.audit_service = audit_service
 
     async def saveOrUpdate(self, t: GuiaAereaRequest):
         documento = None
@@ -51,14 +53,16 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         documento.habilitado = Constantes.HABILITADO
         documento.creado = DateUtil.get_current_local_datetime()
         documento.creado_por = self.session.full_name
-        documento.usuario_id = self.session.user_id
+        documento.usuario_id = UUID(self.session.user_id) if self.session.user_id else None
         documento.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.PROCESANDO
         await self.document_repository.save(documento)
         t.guiaAereaId = documento.guia_aerea_id
-        
         await publish_document_update("INFO", f"Documento N°{documento.numero} guardado, procesando información adicional", documento.guia_aerea_id)
-        
-            
+        await self.audit_service.registrar_creacion(
+            entidad_tipo=Constantes.TipoEntidadAuditoria.GUIA_AEREA,
+            entidad_id=documento.guia_aerea_id,
+            numero_documento=documento.numero
+        ) 
 
     async def save_all_confianza_extraccion(self, t: GuiaAereaRequest):
         confianzas_extraccion = []
@@ -212,8 +216,8 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
             guia_aerea.modificado = DateUtil.get_current_local_datetime()
             guia_aerea.modificado_por = self.session.full_name
             
-            
             await self.document_repository.save(guia_aerea)
+            
             await publish_user_notification(str(self.session.user_id), "INFO", f"Guía aérea N°{t.numero}: Actualizado correctamente! Procesando información adicional", str(t.guiaAereaId))
             await self.guia_aerea_interviniente_service.saveAndReprocess(t)
             await publish_user_notification(str(self.session.user_id), "INFO", f"Guía aérea N°{t.numero}: Información adicional procesada correctamente!", str(t.guiaAereaId))
@@ -222,6 +226,14 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
             await publish_user_notification(str(self.session.user_id), "SUCCESS", f"Guía aérea N°{t.numero}: Proceso de actualización finalizado correctamente.", str(t.guiaAereaId))
 
             await self.notificacion_service.resolver(guia_aerea.guia_aerea_id)
+            await self.audit_service.registrar_modificacion(
+                        entidad_tipo=Constantes.TipoEntidadAuditoria.GUIA_AEREA,
+                        entidad_id=guia_aerea.guia_aerea_id,
+                        numero_documento=t.numero,
+                        campo="estado_registro_codigo",
+                        valor_anterior="OBSERVADO",
+                        valor_nuevo="PROCESADO"
+                    ) 
            
         return guia_aerea
 

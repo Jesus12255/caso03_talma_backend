@@ -301,10 +301,6 @@ Formato requerido:
                 
                 if response.text:
                     text = response.text.strip()
-                    logger.info(f"========== AI RESPONSE COMPLETA PARA INDEX {start_index} ==========")
-                    logger.info(f"Respuesta completa de IA:\n{text}")
-                    logger.info(f"========== FIN AI RESPONSE ==========")
-                    
                     if text.startswith("```"):
                         lines = text.splitlines()
                         if lines[0].startswith("```"): lines = lines[1:]
@@ -332,17 +328,6 @@ Formato requerido:
                         if not isinstance(item, dict): continue
                         if "document_index" not in item: item["document_index"] = start_index
                         if "document_name" not in item: item["document_name"] = f"Documento {start_index}"
-                        
-                        # Log de intervinientes y confianzas
-                        if "intervinientes" in item:
-                            logger.info(f"Intervinientes extraídos: {json.dumps(item['intervinientes'], indent=2, ensure_ascii=False)}")
-                        if "confianzas" in item:
-                            logger.info(f"Confianzas extraídas ({len(item['confianzas'])} campos):")
-                            for conf in item['confianzas']:
-                                logger.info(f"  - {conf.get('nombreCampo')}: {conf.get('confidenceModelo')}")
-                        
-                        # Fix: Si la IA devuelve la estructura plana, la respetamos
-                        # No envolvemos forzosamente en 'fields'
                         pass
                     
                     return extracted_list

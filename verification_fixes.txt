@@ -1,7 +1,0 @@
-Verifying Fixes...
-
-[TEST] /document/saveOrUpdate (No Token)
-PASS: /document/saveOrUpdate returned 401 without token.
-
-[TEST] UserSession.getnombreCompleto() -> test
-PASS: getnombreCompleto check.
