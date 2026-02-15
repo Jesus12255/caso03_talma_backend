@@ -195,6 +195,8 @@ class Constantes:
         CAMBIO_ESTADO = "ACCAD003"
         VALIDACION = "ACCAD004"
         OBSERVACION = "ACCAD005"
+        ELIMINADO = "ACCAD006"
+        RESTORADO = "ACCAD007"
 
 class Catalogo:
     VALORES_CONSTANTES = "VALORES_CONSTANTES"

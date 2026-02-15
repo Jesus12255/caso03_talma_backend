@@ -9,6 +9,8 @@ from app.core.services.audit_service import AuditService
 from core.realtime.publisher import publish_user_notification
 from typing import List
 from uuid import UUID
+from datetime import datetime
+from decimal import Decimal
 
 from app.core.domain.confianza_extraccion import ConfianzaExtraccion
 from app.core.domain.guia_aerea import  GuiaAerea
@@ -24,7 +26,7 @@ from config.mapper import Mapper
 from core.exceptions import AppBaseException
 from core.service.service_base import ServiceBase
 from dto.confianza_extraccion_dtos import GuiaAereaConfianzaRequest
-from dto.guia_aerea_dtos import  GuiaAereaFiltroRequest, GuiaAereaRequest, GuiaAereaSubsanarRequest
+from dto.guia_aerea_dtos import  GuiaAereaFiltroRequest, GuiaAereaRequest, GuiaAereaSubsanarRequest, GuiaAereaDataGridResponse
 from utl.constantes import Constantes
 from utl.date_util import DateUtil
 import re
@@ -134,8 +136,16 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
             return documento
         raise AppBaseException("El documento no se encuentra registrado")
 
+    async def getManifiesto(self, manifiesto_id: UUID) -> Manifiesto:
+        manifiesto = await self.manifiesto_repository.get_by_id(manifiesto_id)
+        if manifiesto is not None:
+            return manifiesto
+        raise AppBaseException("El manifiesto no se encuentra registrado")
+
     async def updateAndReprocess(self, t: GuiaAereaSubsanarRequest):
         guia_aerea = await self.get(t.guiaAereaId)
+        snapshot_anterior = self._serialize_guia(guia_aerea)
+
         guia_aerea.guia_aerea_id = t.guiaAereaId
         guia_aerea.numero = t.numero
         guia_aerea.confidence_numero = Constantes.VALIDATE_MANUAL_CONFIDENCE
@@ -226,14 +236,18 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
             await publish_user_notification(str(self.session.user_id), "SUCCESS", f"Guía aérea N°{t.numero}: Proceso de actualización finalizado correctamente.", str(t.guiaAereaId))
 
             await self.notificacion_service.resolver(guia_aerea.guia_aerea_id)
+            # Auditoría de subsanación con snapshot anterior
             await self.audit_service.registrar_modificacion(
-                        entidad_tipo=Constantes.TipoEntidadAuditoria.GUIA_AEREA,
-                        entidad_id=guia_aerea.guia_aerea_id,
-                        numero_documento=t.numero,
-                        campo="estado_registro_codigo",
-                        valor_anterior="OBSERVADO",
-                        valor_nuevo="PROCESADO"
-                    ) 
+                entidad_tipo=Constantes.TipoEntidadAuditoria.GUIA_AEREA,
+                entidad_id=guia_aerea.guia_aerea_id,
+                numero_documento=guia_aerea.numero,
+                campo="MULTIPLES",  # Modificación masiva
+                valor_anterior="OBSERVADO",
+                valor_nuevo="SUBSANADO",
+                comentario="Subsanación manual de guía aérea",
+                accion_tipo_codigo=Constantes.TipoAccionAuditoria.MODIFICADO,
+                datos_adicionales={"estado_anterior": snapshot_anterior}
+            ) 
            
         return guia_aerea
 
@@ -345,8 +359,8 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
             intervinientes_map,
             intervinientes_modificados
         )
-        await self._validar_duplicados(guia_aerea)
         await self._validar_numero_formato(guia_aerea)
+        await self._validar_duplicados(guia_aerea)
 
         # 3️⃣ Estado final coherente
         guia_aerea.modificado = DateUtil.get_current_local_datetime()
@@ -484,13 +498,65 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
 
     async def delete(self, guia_aerea_id: UUID):
         guia_aerea = await self.get(str(guia_aerea_id))
-        if Constantes.HABILITADO == guia_aerea.habilitado:
-            guia_aerea.habilitado = Constantes.INHABILITADO
-        else:
-            guia_aerea.habilitado = Constantes.HABILITADO
+        
+        # Determinar si estamos eliminando (inhabilitando) o restaurando (habilitando)
+        es_eliminacion = (guia_aerea.habilitado == Constantes.HABILITADO)
+        nuevo_estado = Constantes.INHABILITADO if es_eliminacion else Constantes.HABILITADO
+        
+        guia_aerea.habilitado = nuevo_estado
         guia_aerea.modificado = DateUtil.get_current_local_datetime()
         guia_aerea.modificado_por = self.session.full_name
+        
         await self.document_repository.save(guia_aerea)
+
+        # Auditoría explícita de eliminación/restauración
+        accion_audit = "ELIMINACIÓN" if es_eliminacion else "RESTAURACIÓN"
+        valor_anterior_audit = "HABILITADO" if es_eliminacion else "INHABILITADO"
+        valor_nuevo_audit = "INHABILITADO" if es_eliminacion else "HABILITADO"
+        
+        await self.audit_service.registrar_modificacion(
+            entidad_tipo=Constantes.TipoEntidadAuditoria.GUIA_AEREA,
+            entidad_id=guia_aerea.guia_aerea_id,
+            numero_documento=guia_aerea.numero,
+            campo="habilitado",
+            valor_anterior=valor_anterior_audit,
+            valor_nuevo=valor_nuevo_audit,
+            comentario=f"{accion_audit} manual de la guía aérea",
+            accion_tipo_codigo=Constantes.TipoAccionAuditoria.ELIMINADO if es_eliminacion else Constantes.TipoAccionAuditoria.RESTORADO
+        )
+
+        # Actualizar manifiesto si existe
+        if guia_aerea.manifiesto_id:
+            try:
+                manifiesto = await self.getManifiesto(guia_aerea.manifiesto_id)
+                # Si es eliminación, restamos (sumar=False). Si es restauración, sumamos (sumar=True)
+                self._update_manifiesto_totals(manifiesto, guia_aerea, sumar=not es_eliminacion) 
+                await self.manifiesto_repository.save(manifiesto)
+            except Exception as e:
+                logger.error(f"Error actualizando manifiesto {guia_aerea.manifiesto_id}: {e}")
+
+    def _update_manifiesto_totals(self, manifiesto, guia, sumar: bool):
+        factor = 1 if sumar else -1
+        
+        # Usar coalescencia (or 0) para evitar errores con None
+        qty = guia.cantidad_piezas or 0
+        peso = guia.peso_bruto or 0.0
+        vol = guia.volumen or 0.0
+        
+        # Actualizar totales evitando negativos
+        manifiesto.total_guias = max(0, (manifiesto.total_guias or 0) + factor)
+        manifiesto.total_bultos = max(0, (manifiesto.total_bultos or 0) + (qty * factor))
+        manifiesto.peso_bruto_total = max(0.0, (manifiesto.peso_bruto_total or 0.0) + (peso * factor))
+        manifiesto.volumen_total = max(0.0, (manifiesto.volumen_total or 0.0) + (vol * factor))
+        
+        manifiesto.modificado = DateUtil.get_current_local_datetime()
+        manifiesto.modificado_por = self.session.full_name
+        
+        # Lógica de estado del manifiesto
+        if manifiesto.total_guias == 0:
+             manifiesto.habilitado = Constantes.INHABILITADO
+        elif manifiesto.habilitado == Constantes.INHABILITADO and sumar:
+             manifiesto.habilitado = Constantes.HABILITADO
 
     async def deleteAll(self, request: DeleteAllGuiaAereaRequest):
         for id in request.guiaAereaIds:
@@ -502,3 +568,17 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         guia_aerea.modificado = DateUtil.get_current_local_datetime()
         guia_aerea.modificado_por = self.session.full_name if hasattr(self, 'session') and self.session else Constantes.SYSTEM_USER
         await self.document_repository.save(guia_aerea)
+
+    def _serialize_guia(self, guia: GuiaAerea) -> dict:
+        try:
+            data = {}
+            for column in guia.__table__.columns:
+                value = getattr(guia, column.name, None)
+                if isinstance(value, (UUID, datetime)):
+                    value = str(value)
+                elif isinstance(value, Decimal):
+                    value = float(value)
+                data[column.name] = value
+            return data
+        except Exception as e:
+            return {"error_serialization": str(e)}

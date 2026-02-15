@@ -48,14 +48,16 @@ class AuditServiceImpl(AuditService, ServiceBase):
         campo: str,
         valor_anterior: any,
         valor_nuevo: any,
-        comentario: Optional[str] = None
+        comentario: Optional[str] = None,
+        accion_tipo_codigo: Optional[str] = None,
+        datos_adicionales: Optional[dict] = None
     ) -> None:
         try:
             audit = Audit()
             audit.entidad_tipo_codigo = entidad_tipo
             audit.entidad_id = entidad_id
             audit.numero_documento = numero_documento
-            audit.accion_tipo_codigo = Constantes.TipoAccionAuditoria.MODIFICADO
+            audit.accion_tipo_codigo = accion_tipo_codigo if accion_tipo_codigo else Constantes.TipoAccionAuditoria.MODIFICADO
             audit.campo_modificado = campo
             audit.valor_anterior = valor_anterior
             audit.valor_nuevo = valor_nuevo
@@ -66,6 +68,7 @@ class AuditServiceImpl(AuditService, ServiceBase):
             audit.habilitado = Constantes.HABILITADO
             audit.creado = DateUtil.get_current_local_datetime()
             audit.creado_por = Constantes.SYSTEM_USER
+            audit.datos_adicionales = datos_adicionales
             await self.audit_repository.save(audit)
         except Exception as e:
             logger.error(f"ERROR CRÍTICO AL GUARDAR AUDITORÍA MODIFICACIÓN: {e}")
