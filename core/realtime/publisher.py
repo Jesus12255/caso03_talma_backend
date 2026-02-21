@@ -33,7 +33,7 @@ async def publish_document_update(type: str, message: str, doc_id: str = None):
     except Exception as e:
         logger.error(f"Error publishing to Redis: {e}")
 
-async def publish_user_notification(user_id: str, type: str, message: str = "", doc_id: str = None, title: str = None, severity: str = "INFO", is_persistent: bool = False, notification_id: str = None):
+async def publish_user_notification(user_id: str, type: str, message: str = "", doc_id: str = None, title: str = None, severity: str = "INFO", is_persistent: bool = False, notification_id: str = None, metadata: dict = None):
     """Publica una notificación privada para un usuario específico"""
     try:
         connection_kwargs = {
@@ -54,7 +54,8 @@ async def publish_user_notification(user_id: str, type: str, message: str = "", 
             "severity": severity,
             "timestamp": DateUtil.get_current_local_datetime().isoformat(),
             "isPersistent": is_persistent,
-            "notificationId": str(notification_id) if notification_id else None
+            "notificationId": str(notification_id) if notification_id else None,
+            "metadata": metadata
         }
         
         # Canal específico del usuario: user:UUID:notifications

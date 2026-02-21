@@ -63,6 +63,7 @@ class GuiaAereaRequest(BaseModel):
 
     instruccionesEspeciales: Optional[str] = None
     observaciones: Optional[str] = None
+    analisisContextual: Optional[dict] = None
     estadoRegistroCodigo: Optional[str] = Field(default=None, max_length=40)
     url: Optional[str] = None
     

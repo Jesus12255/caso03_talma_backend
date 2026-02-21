@@ -173,6 +173,7 @@ class Constantes:
         OBSERVACION = "TPN001"
         ANOMALIA = "TPN002"
         RECORDATORIO = "TPN003"
+        IRREGULARIDAD = "TPN004"
         
     class SeveridadNotificacion:
         INFO = "SVNT001"
@@ -197,6 +198,10 @@ class Constantes:
         OBSERVACION = "ACCAD005"
         ELIMINADO = "ACCAD006"
         RESTORADO = "ACCAD007"
+    
+    class PuntuacionNivelRiesgo:
+        ALTO = 60
+        MEDIO = 40
 
 class Catalogo:
     VALORES_CONSTANTES = "VALORES_CONSTANTES"

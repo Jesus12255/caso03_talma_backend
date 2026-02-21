@@ -21,6 +21,9 @@ def setup_routes(app: FastAPI):
     
     from app.core.api import audit_router
     app.include_router(audit_router.router, prefix="/audit", tags=["Audit"], dependencies=[Depends(get_current_user)])
+
+    from app.core.api import irregularidad_router
+    app.include_router(irregularidad_router.router, prefix="/irregularidad", tags=["Irregularidad"], dependencies=[Depends(get_current_user)])
     
     from core.realtime import websocket
     app.include_router(websocket.router, prefix="/documents", tags=["WebSockets"])

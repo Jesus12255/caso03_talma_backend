@@ -1,4 +1,6 @@
 
+from app.core.dependencies.dependencies_irregularidad import get_irregularidad_service
+from app.core.dependencies.dependencies_repositories import get_document_repository
 from app.core.dependencies.dependencies_notificacion import get_notificacion_service
 from app.core.dependencies.dependencies_audit import get_audit_service
 from app.core.repository.impl.manifiesto_repository_impl import ManifiestoRepositoryImpl
@@ -16,8 +18,6 @@ from app.integration.service.storage_service import StorageService
 from app.core.services.document_service import DocumentService
 from config.database_config import get_db
 
-def get_document_repository(db: AsyncSession = Depends(get_db)):
-    return DocumentRepositoryImpl(db)
 
 def get_guia_aerea_filtro_repository(db: AsyncSession = Depends(get_db)):
     return GuiaAereaFiltroRepositoryImpl(db)
@@ -37,7 +37,9 @@ def get_document_service(
     guia_aerea_interviniente_service = Depends(get_guia_aerea_interviniente_service),
     notificacion_service = Depends(get_notificacion_service),
     manifiesto_repository = Depends(get_manifiesto_repository),
-    audit_service = Depends(get_audit_service)):
+    audit_service = Depends(get_audit_service),
+    irregularidad_service = Depends(get_irregularidad_service)
+    ):
     return DocumentServiceImpl(repository,
     guia_aerea_filtro_repository,
     interviniente_service,
@@ -46,7 +48,8 @@ def get_document_service(
     guia_aerea_interviniente_service,
     notificacion_service,
     manifiesto_repository,
-    audit_service
+    audit_service, 
+    irregularidad_service
     )
 
 def get_document_facade(service: DocumentService = Depends(get_document_service), guia_aerea_interviniente_service = Depends(get_guia_aerea_interviniente_service), storage_service = Depends(get_storage_service)):
