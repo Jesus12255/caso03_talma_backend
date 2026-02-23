@@ -228,6 +228,7 @@ class IrregularidadServiceImpl(IrregularidadService):
     async def _crear_nuevo_perfil(self, t: GuiaAereaInterviniente, vector: list, guia: GuiaAerea):
         current_weight = float(guia.peso_bruto or 0)
         ruta_key = f"{guia.origen_codigo}-{guia.destino_codigo}"
+        current_date = guia.fecha_vuelo
     
         perfil = PerfilRiesgo(
             nombre_normalizado= self._normalize_name(t.nombre),
@@ -239,10 +240,11 @@ class IrregularidadServiceImpl(IrregularidadService):
             peso_promedio=current_weight,
             peso_std_dev=0.0,
             peso_maximo_historico=current_weight,
+            peso_minimo_historico=current_weight,
             cantidad_envios=1,
             rutas_frecuentes={ruta_key: 1},
-            fecha_primer_envio=datetime.now(),
-            fecha_ultimo_envio=datetime.now(),
+            fecha_primer_envio=current_date,
+            fecha_ultimo_envio=current_date,
             total_consignatarios_vinculados=1 if t.rol_codigo == Constantes.TipoInterviniente.REMITENTE else 0, 
             modificado=datetime.now()
         )
@@ -252,6 +254,7 @@ class IrregularidadServiceImpl(IrregularidadService):
     async def _actualizar_estadisticas_perfil(self, perfil: PerfilRiesgo, guia: GuiaAerea, nombre: str):
        
         current_weight = float(guia.peso_bruto or 0)
+        current_date = guia.fecha_vuelo
         ruta_key = f"{guia.origen_codigo}-{guia.destino_codigo}"
         n = perfil.cantidad_envios
         old_avg = perfil.peso_promedio
@@ -270,8 +273,24 @@ class IrregularidadServiceImpl(IrregularidadService):
         
         if current_weight > (perfil.peso_maximo_historico or 0):
             perfil.peso_maximo_historico = current_weight
+            
+        # Para el peso mínimo comprobamos que si es el primer envío (el actual mínimo puede ser 0 o estar mal asignado) 
+        # o si es menor al que tenemos guardado, lo reemplazamos.
+        if perfil.cantidad_envios == 1 or current_weight < (perfil.peso_minimo_historico or float('inf')) or (perfil.peso_minimo_historico == 0 and current_weight > 0):
+             perfil.peso_minimo_historico = current_weight
 
-        perfil.fecha_ultimo_envio = datetime.now()
+        # Actualizamos fechas extremas del ciclo de vida operativo de forma robusta
+        if not perfil.fecha_primer_envio or current_date < perfil.fecha_primer_envio:
+            perfil.fecha_primer_envio = current_date
+            
+        if not perfil.fecha_ultimo_envio or current_date > perfil.fecha_ultimo_envio:
+            perfil.fecha_ultimo_envio = current_date
+
+        # Calculamos los días promedio entre envío basándonos en la ventana total de tiempo
+        if perfil.cantidad_envios > 1 and perfil.fecha_primer_envio and perfil.fecha_ultimo_envio:
+            total_dias = (perfil.fecha_ultimo_envio - perfil.fecha_primer_envio).days
+            perfil.dias_promedio_entre_envios = int(round(total_dias / (perfil.cantidad_envios - 1)))
+
         perfil.modificado = datetime.now()
         
         

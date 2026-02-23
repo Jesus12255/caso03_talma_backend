@@ -1,4 +1,6 @@
 
+from app.configuration.dependencies.dependencies_catalogo import get_comun_facade
+from app.core.dependencies.dependencies_perfil_riesgo import get_perfil_riesgo_service
 from app.core.dependencies.dependencies_audit import get_audit_service
 from app.integration.dependencies.dependencies_embedding import get_embedding_service
 from app.core.dependencies.dependencies_guia_aerea_interviniente import get_guia_aerea_interviniente_service
@@ -25,5 +27,5 @@ def get_irregularidad_service(
     ):
     return IrregularidadServiceImpl(perfil_repo, notificacion_repo, notificacion_service, document_repo, guia_aerea_interviniente_service, embedding_service, auditoria_service)
 
-def get_irregularidad_facade(service = Depends(get_irregularidad_service)):
-    return IrregularidadFacadeImpl(service)
+def get_irregularidad_facade(service = Depends(get_irregularidad_service), perfil_riesgo_service = Depends(get_perfil_riesgo_service), comun_facade = Depends(get_comun_facade)):
+    return IrregularidadFacadeImpl(service, perfil_riesgo_service, comun_facade)

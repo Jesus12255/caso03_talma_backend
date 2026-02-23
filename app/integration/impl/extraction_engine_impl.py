@@ -19,6 +19,42 @@ masked_key = f"{settings.LLM_API_KEY[:3]}...{settings.LLM_API_KEY[-3:]}" if key_
 
 class ExtractionEngineImpl(ExtractionEngine):
 
+    def _repair_json(self, text: str) -> str:
+        start_idx = -1
+        for i, c in enumerate(text):
+            if c in ['{', '[']:
+                start_idx = i
+                break
+        if start_idx == -1: return text
+        
+        stack = []
+        in_string = False
+        escape = False
+        for i in range(start_idx, len(text)):
+            char = text[i]
+            if not escape and char == '"':
+                in_string = not in_string
+            if not in_string:
+                if char in ['{', '[']:
+                    stack.append(char)
+                elif char == '}':
+                    if stack and stack[-1] == '{':
+                        stack.pop()
+                        if not stack:
+                            return text[start_idx:i+1]
+                elif char == ']':
+                    if stack and stack[-1] == '[':
+                        stack.pop()
+                        if not stack:
+                            return text[start_idx:i+1]
+            
+            if char == '\\' and not escape:
+                escape = True
+            else:
+                escape = False
+                
+        return text
+
     async def extract_single_document(self, base64_data: str, mime_type: str, page_count: int, start_index: int) -> list[dict]:
         today = _date.today().strftime("%Y-%m-%d")
         client = genai.Client(api_key=settings.LLM_API_KEY)
@@ -358,8 +394,13 @@ Formato requerido:
                     try:
                         result_data = json.loads(text)
                     except json.JSONDecodeError:
-                        logger.error(f"JSON ERROR for index {start_index}: {text}")
-                        return [{"document_index": start_index, "error": "LLM returned invalid JSON"}]
+                        fixed_text = self._repair_json(text)
+                        try:
+                            result_data = json.loads(fixed_text)
+                            logger.info(f"Successfully repaired JSON for index {start_index}")
+                        except json.JSONDecodeError:
+                            logger.error(f"JSON ERROR for index {start_index}: {text}")
+                            return [{"document_index": start_index, "error": "LLM returned invalid JSON"}]
 
                     extracted_list = []
                     if isinstance(result_data, list):

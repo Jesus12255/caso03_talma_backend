@@ -227,6 +227,7 @@ class Catalogo:
     ESTADO_MANIFIESTO = "ESTADO_MANIFIESTO"
     TIPO_ENTIDAD_AUDITORIA = "TIPO_ENTIDAD_AUDITORIA"
     ACCION_AUDITORIA = "ACCION_AUDITORIA"
+    TIPO_INTERVINIENTE = "TIPO_INTERVINIENTE"
 
     def __init__(self):
         raise RuntimeError("Catalogo is a constants-only class")

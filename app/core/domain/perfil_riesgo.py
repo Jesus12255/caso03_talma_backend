@@ -24,12 +24,13 @@ class PerfilRiesgo(BaseModel):
     peso_promedio = Column(Float, default=0.0)
     peso_std_dev = Column(Float, default=0.0) # Desviación estándar para cálculo de Z-Score
     peso_maximo_historico = Column(Float, default=0.0)
+    peso_minimo_historico = Column(Float, default=0.0)
     
     # --- CAPA HISTÓRICA: MÉTRICAS TEMPORALES Y FRECUENCIA ---
     cantidad_envios = Column(Integer, default=0)
     dias_promedio_entre_envios = Column(Integer, default=0)
-    fecha_primer_envio = Column(DateTime, default=datetime.utcnow)
-    fecha_ultimo_envio = Column(DateTime, onupdate=datetime.utcnow)
+    fecha_primer_envio = Column(DateTime, nullable=True)
+    fecha_ultimo_envio = Column(DateTime, nullable=True)
     es_perfil_durmiente = Column(Boolean, default=False) # True si lleva > 6 meses sin operar
     
     # --- CONTEXTO DE RED Y RUTAS ---
