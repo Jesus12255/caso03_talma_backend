@@ -1,25 +1,40 @@
 import os
 import subprocess
 import sys
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 def run_api():
     print("🚀 Starting FastAPI Server...")
-    # Using uvicorn to run the app
-    # host 0.0.0.0 is necessary for Docker/Cloud Run
-    # port 8080 matches Dockerfile and Cloud Run default
     cmd = [
         "uvicorn", 
         "main:app", 
         "--host", "0.0.0.0", 
         "--port", "8080", 
-        "--workers", "1"  # Keep it simple for start
+        "--workers", "1"
     ]
     subprocess.run(cmd)
 
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"OK")
+    def log_message(self, format, *args):
+        return # Silenciar logs de health check
+
+def start_health_server():
+    server = HTTPServer(('0.0.0.0', 8080), HealthCheckHandler)
+    print("🏥 Health Check Server started on port 8080")
+    server.serve_forever()
+
 def run_worker():
     print("📦 Starting Celery Worker (Pool: SOLO)...")
-    # Exact command requested by user:
-    # celery -A core.celery.celery_app worker --loglevel=info --pool=solo
+    
+    # Iniciar servidor de salud en un hilo para satisfacer a Cloud Run
+    health_thread = threading.Thread(target=start_health_server, daemon=True)
+    health_thread.start()
+
     cmd = [
         "celery", 
         "-A", "core.celery.celery_app", 
