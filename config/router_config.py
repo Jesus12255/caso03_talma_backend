@@ -27,6 +27,10 @@ def setup_routes(app: FastAPI):
     
     from core.realtime import websocket
     app.include_router(websocket.router, prefix="/documents", tags=["WebSockets"])
+    
+    from app.core.websockets.copilot import router as copilot_router
+    app.include_router(copilot_router.router, tags=["Copilot WebSocket"])
+    
     setup_exception_handlers(app)
     
     @app.get("/")

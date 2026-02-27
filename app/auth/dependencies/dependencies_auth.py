@@ -45,3 +45,21 @@ async def get_current_user(
         return email
     except JWTError:
         raise credentials_exception
+
+async def verify_websocket_token(token: str) -> dict | None:
+    """Verifica un JWT token crudo proveniente de un WebSocket"""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        email: str = payload.get("sub")
+        if not email:
+            return None
+            
+        return {
+            "email": email,
+            "user_id": payload.get("usuarioId"),
+            "role_id": payload.get("rolId"),
+            "role_code": payload.get("rolCodigo"),
+            "role_name": payload.get("rol")
+        }
+    except JWTError:
+        return None
