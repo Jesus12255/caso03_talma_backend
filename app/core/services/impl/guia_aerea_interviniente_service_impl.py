@@ -27,14 +27,6 @@ class GuiaAereaIntervinienteServiceImpl( GuiaAereaIntervinienteService, ServiceB
         self.confianza_extraccion_repository = confianza_extraccion_repository
 
     async def save(self, request: GuiaAereaRequest):
-        
-        logger.info(f"========== GUARDANDO INTERVINIENTES ==========")
-        logger.info(f"Total de confianzas en request: {len(request.confianzas) if request.confianzas else 0}")
-        if request.confianzas:
-            logger.info("Confianzas recibidas en request:")
-            for conf in request.confianzas:
-                logger.info(f"  - {conf.nombreCampo}: {conf.confidenceModelo}")
-
         remitente_req = self._find_interviniente(request.intervinientes, Constantes.TipoInterviniente.REMITENTE)
         consignatario_req = self._find_interviniente(request.intervinientes, Constantes.TipoInterviniente.CONSIGNATARIO)
 

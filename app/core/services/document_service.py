@@ -1,6 +1,5 @@
 
-from dto.guia_aerea_dtos import GuiaAereaDataGridResponse
-from dto.collection_response import CollectionResponse
+from app.core.domain.manifiesto import Manifiesto
 from app.core.domain.guia_aerea_data_grid import GuiaAereaDataGrid
 from dto.guia_aerea_dtos import DeleteAllGuiaAereaRequest
 from abc import ABC, abstractmethod
@@ -18,6 +17,10 @@ class DocumentService(ABC):
 
     @abstractmethod
     async def get(self, documentoId: str) -> GuiaAerea:
+        pass
+
+    @abstractmethod
+    async def getManifiesto(self, manifiesto_id: UUID) -> Manifiesto:
         pass
 
     @abstractmethod

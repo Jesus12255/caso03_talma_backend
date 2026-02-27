@@ -11,6 +11,7 @@ class UserSession:
     role_id: Optional[str] = None
     role_code: Optional[str] = None
     role_name: Optional[str] = None
+    ip_address: Optional[str] = None
 
 
 

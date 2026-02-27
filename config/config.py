@@ -10,6 +10,7 @@ class Settings(BaseSettings):
 
     LLM_API_KEY: str 
     LLM_MODEL_NAME: str 
+    COPILOT_LLM_MODEL_NAME: str 
     DATABASE_URL: str
     REDIS_URL: str
     CELERY_TASK_QUEUE: str = "document_queue"

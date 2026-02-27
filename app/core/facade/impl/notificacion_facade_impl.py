@@ -5,6 +5,7 @@ from app.core.services.notificacion_service import NotificacionService
 from uuid import UUID
 from core.facade.facade_base import FacadeBase
 from dto.universal_dto import BaseOperacionResponse
+
 class NotificacionFacadeImpl(NotificacionFacade, FacadeBase):
 
     def __init__(self, notificacion_service: NotificacionService):

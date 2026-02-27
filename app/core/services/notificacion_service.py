@@ -1,3 +1,4 @@
+from app.core.domain.notificacion import Notificacion
 from uuid import UUID
 from abc import abstractmethod
 from dto.notificacion import NotificacionRequest
@@ -19,4 +20,8 @@ class NotificacionService(ABC):
 
     @abstractmethod
     async def resolver(self, guia_aerea_id: UUID):
+        pass
+
+    @abstractmethod
+    async def get(self, notificacion_id: UUID) -> Notificacion:
         pass
