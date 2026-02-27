@@ -27,5 +27,16 @@ def get_irregularidad_service(
     ):
     return IrregularidadServiceImpl(perfil_repo, notificacion_repo, notificacion_service, document_repo, guia_aerea_interviniente_service, embedding_service, auditoria_service)
 
-def get_irregularidad_facade(service = Depends(get_irregularidad_service), perfil_riesgo_service = Depends(get_perfil_riesgo_service), comun_facade = Depends(get_comun_facade)):
-    return IrregularidadFacadeImpl(service, perfil_riesgo_service, comun_facade)
+def get_irregularidad_facade(
+    service = Depends(get_irregularidad_service), 
+    perfil_riesgo_service = Depends(get_perfil_riesgo_service), 
+    comun_facade = Depends(get_comun_facade),
+    db: AsyncSession = Depends(get_db)
+    ):
+    from app.core.dependencies.dependencies_manifiesto import get_manifiesto_service
+    # Explicitly resolve using FastAPI's internal logic if needed, but usually 
+    # just initializing with manually resolved dependencies works for simple cases
+    # OR we use the ServiceContainer here which is cleaner.
+    from core.service.service_container import ServiceContainer
+    container = ServiceContainer(db)
+    return IrregularidadFacadeImpl(service, perfil_riesgo_service, comun_facade, container.manifiesto_service)

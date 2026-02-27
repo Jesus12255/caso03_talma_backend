@@ -8,6 +8,9 @@ from fastapi import Depends
 from app.core.facade.irregularidad_facade import IrregularidadFacade
 from dto.universal_dto import BaseOperacionResponse
 from fastapi import APIRouter
+from dto.perfil_riesgo_dtos import CambiarListaRequest
+from dto.perfil_riesgo_dtos import PerfilRiesgoFiltroRequest, PerfilRiesgoResponse, PerfilRiesgoDispersionResponse, RedVinculosResponse
+
 
 router = APIRouter()
 
@@ -27,6 +30,15 @@ async def findPerfiles(request: PerfilRiesgoFiltroRequest, irregularidad_facade:
 async def getPerfilById(id: str, irregularidad_facade: IrregularidadFacade = Depends(get_irregularidad_facade)) -> PerfilRiesgoResponse:
     return await irregularidad_facade.getPerfilById(id)
 
+
 @router.get("/perfiles/{id}/dispersion", response_model=PerfilRiesgoDispersionResponse)
 async def getPerfilDispersion(id: str, irregularidad_facade: IrregularidadFacade = Depends(get_irregularidad_facade)) -> PerfilRiesgoDispersionResponse:
     return await irregularidad_facade.getPerfilDispersion(id)
+
+@router.post("/red-vinculos", response_model=RedVinculosResponse)
+async def getRedVinculos(request: PerfilRiesgoFiltroRequest, irregularidad_facade: IrregularidadFacade = Depends(get_irregularidad_facade)) -> RedVinculosResponse:
+    return await irregularidad_facade.getRedVinculos(request)
+
+@router.post("/perfiles/cambiar-lista", response_model=BaseOperacionResponse)
+async def cambiarListaPerfil(request: CambiarListaRequest, irregularidad_facade: IrregularidadFacade = Depends(get_irregularidad_facade)) -> BaseOperacionResponse:
+    return await irregularidad_facade.cambiarListaPerfil(request)

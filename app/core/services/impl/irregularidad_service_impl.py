@@ -3,9 +3,10 @@ from app.core.services.audit_service import AuditService
 from app.core.domain.guia_aerea_interviniente import GuiaAereaInterviniente
 from app.core.services.guia_aerea_interviniente_service import GuiaAereaIntervinienteService
 from app.integration.service.embedding_service import EmbeddingService
+from dto.perfil_riesgo_dtos import PerfilRiesgoFiltroRequest
 import unicodedata
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timedelta
 import math
 from app.core.services.IrregularidadService import IrregularidadService
 from app.core.repository.perfil_riesgo_repository import PerfilRiesgoRepository
@@ -90,15 +91,10 @@ class IrregularidadServiceImpl(IrregularidadService):
             "nivel_riesgo": self._determinar_nivel(total_score)
         }
        
-        if total_score >= 40:
+        if total_score >= 30:
             await self._registrar_notificacion(guia_aerea, result)
         else: 
-            update_data = {
-                "estado_registro_codigo": Constantes.EstadoRegistroGuiaAereea.PROCESADO,
-                "modificado": datetime.now(),
-                "modificado_por": Constantes.SYSTEM_USER
-            }
-            await self.document_repo.update(guia_aerea.guia_aerea_id, update_data)
+            await self.validar(guia_aerea)
             await publish_user_notification(str(guia_aerea.usuario_id), "SUCCESS", f"Guía aérea N°{guia_aerea.numero}: Procesado correctamente", str(guia_aerea.guia_aerea_id))
         return result
 
@@ -109,15 +105,16 @@ class IrregularidadServiceImpl(IrregularidadService):
         vector_nombre = await self.embedding_service.get_embedding(t.nombre)
         perfil = await self.perfil_repo.find_by_vector_similarity(vector_nombre, Constantes.TipoInterviniente.REMITENTE, threshold=0.1)
 
-        if not perfil:
-            perfil = await self._crear_nuevo_perfil(t, vector_nombre, guia)
-        else:
-            score += perfil.score_base
-            if perfil.cantidad_envios > 3 and perfil.peso_std_dev > 0:
-                score, alerts = await self._calcula_puntuacion_z_peso(perfil, guia, score, alerts)
-                score, alerts = await self._analizar_ruta(perfil, guia, score, alerts)
-            if score == 0: 
-                await self._actualizar_estadisticas_perfil(perfil, guia, t.nombre)
+        if perfil:
+            if perfil.score_base >= 100:
+                score += perfil.score_base
+                alerts.append(f"ALERTA CRÍTICA: El remitente '{t.nombre}' se encuentra en la LISTA NEGRA del sistema.")
+            else:
+                score += perfil.score_base
+                if perfil.cantidad_envios >= 4 and perfil.peso_std_dev > 0:
+                    score, alerts = await self._calcula_puntuacion_z_peso(perfil, guia, score, alerts)
+                    score, alerts = await self._analizar_ruta(perfil, guia, score, alerts)
+                
         return score, alerts
 
     async def _analizar_consignatario(self, t: GuiaAereaInterviniente, guia: GuiaAerea) -> tuple[int, list]:
@@ -128,7 +125,6 @@ class IrregularidadServiceImpl(IrregularidadService):
         perfil = await self.perfil_repo.find_by_vector_similarity(vector, Constantes.TipoInterviniente.CONSIGNATARIO, threshold=0.1)
         
         if not perfil: 
-            await self._crear_nuevo_perfil(t, vector, guia)
             return score, alerts
 
         score += perfil.score_base
@@ -152,8 +148,10 @@ class IrregularidadServiceImpl(IrregularidadService):
                 f"Frecuencia de recepción elevada: el consignatario '{t.nombre}' "
                 f"acumula {count} guías en las últimas 24 h (límite habitual: {int(limit_frecuencia)})."
             )
-        if score == 0: 
-            await self._actualizar_estadisticas_perfil(perfil, guia, t.nombre)
+
+        if perfil.score_base >= 100:
+            alerts.append(f"ALERTA CRÍTICA: El consignatario '{t.nombre}' se encuentra en la LISTA NEGRA del sistema.")
+            
         return score, alerts
 
     async def _crea_lista_de_nombres_del_consignatario(self, t: GuiaAereaInterviniente, perfil: PerfilRiesgo) -> list[str]:
@@ -165,7 +163,12 @@ class IrregularidadServiceImpl(IrregularidadService):
 
     async def _calcula_puntuacion_z_peso(self, perfil: PerfilRiesgo, guia: GuiaAerea, score: int, alerts: list) -> tuple[int, list]:
         current_weight = float(guia.peso_bruto or 0)
-        z_score     = (current_weight - perfil.peso_promedio) / perfil.peso_std_dev
+        
+        # Matemáticas Z-Score tradicionales
+        # Prevenir división por cero usando un mínimo de 1.0 kg de desviación estándar
+        std_dev_seguro = max(perfil.peso_std_dev, 1.0)
+        
+        z_score     = (current_weight - perfil.peso_promedio) / std_dev_seguro
         z_abs       = abs(z_score)
         direccion   = "mayor" if z_score > 0 else "menor"
 
@@ -225,7 +228,7 @@ class IrregularidadServiceImpl(IrregularidadService):
 
         return score, alerts
 
-    async def _crear_nuevo_perfil(self, t: GuiaAereaInterviniente, vector: list, guia: GuiaAerea):
+    async def _crear_nuevo_perfil(self, t: GuiaAereaInterviniente, vector: list, guia: GuiaAerea) -> PerfilRiesgo:
         current_weight = float(guia.peso_bruto or 0)
         ruta_key = f"{guia.origen_codigo}-{guia.destino_codigo}"
         current_date = guia.fecha_vuelo
@@ -234,18 +237,18 @@ class IrregularidadServiceImpl(IrregularidadService):
             nombre_normalizado= self._normalize_name(t.nombre),
             tipo_interviniente_codigo=t.rol_codigo,
             variaciones_nombre=[t.nombre],
-            telefonos_conocidos=[t.telefono] ,
-            direcciones_conocidas=[t.direccion],
+            telefonos_conocidos=[t.telefono] if t.telefono else [],
+            direcciones_conocidas=[t.direccion] if t.direccion else [],
             vector_identidad=vector,
-            peso_promedio=current_weight,
+            peso_promedio=0.0,
             peso_std_dev=0.0,
-            peso_maximo_historico=current_weight,
-            peso_minimo_historico=current_weight,
-            cantidad_envios=1,
-            rutas_frecuentes={ruta_key: 1},
+            peso_maximo_historico=0.0,
+            peso_minimo_historico=0.0,
+            cantidad_envios=0,
+            rutas_frecuentes={},
             fecha_primer_envio=current_date,
             fecha_ultimo_envio=current_date,
-            total_consignatarios_vinculados=1 if t.rol_codigo == Constantes.TipoInterviniente.REMITENTE else 0, 
+            total_consignatarios_vinculados=0, 
             modificado=datetime.now()
         )
         await self.perfil_repo.save(perfil)
@@ -329,18 +332,29 @@ class IrregularidadServiceImpl(IrregularidadService):
         return "ALTO"
 
     async def _registrar_notificacion(self, guia: GuiaAerea, result: dict):
+        is_blacklist = any("LISTA NEGRA" in a for a in result['alertas'])
+        mensaje_notif = f"Se detectaron {len(result['alertas'])} alertas. Score: {result['score']}"
+        titulo_notif = f"Irregularidad Detectada: {result['nivel_riesgo']}"
+        severidad_notif = Constantes.SeveridadNotificacion.WARNING if result['score'] < 75 else Constantes.SeveridadNotificacion.CRITICAL
+
+        if is_blacklist:
+            mensaje_notif = "No se puede procesar porque alguno de los intervinientes está en la lista negra"
+            titulo_notif = "BLOQUEO: Interviniente en Lista Negra"
+            severidad_notif = Constantes.SeveridadNotificacion.CRITICAL
+
         notificacion = Notificacion(
             guia_aerea_id=guia.guia_aerea_id,
             usuario_id=guia.usuario_id,
             tipo_codigo=Constantes.TipoNotificacion.IRREGULARIDAD,
-            titulo=f"Irregularidad Detectada: {result['nivel_riesgo']}",
-            mensaje=f"Se detectaron {len(result['alertas'])} alertas. Score: {result['score']}",
-            severidad_codigo=Constantes.SeveridadNotificacion.WARNING if result['score'] < 75 else Constantes.SeveridadNotificacion.CRITICAL,
+            titulo=titulo_notif,
+            mensaje=mensaje_notif,
+            severidad_codigo=severidad_notif,
             estado_codigo=Constantes.EstadoNotificacion.PENDIENTE,
             meta_data={
                 "score_riesgo": result['score'],
                 "alertas": result['alertas'],
-                "nivel": result['nivel_riesgo']
+                "nivel": result['nivel_riesgo'],
+                "is_blacklist": is_blacklist
             }
         )
         await self.notificacion_repo.save(notificacion)
@@ -363,6 +377,10 @@ class IrregularidadServiceImpl(IrregularidadService):
                 "modificado": datetime.now(),
                 "modificado_por": Constantes.SYSTEM_USER
             }
+        
+        if is_blacklist:
+            update_data["observaciones"] = "No se puede procesar porque alguno de los intervinientes está en la lista negra"
+
         await self.document_repo.update(guia.guia_aerea_id, update_data)
 
         await self.auditoria_service.registrar_modificacion(
@@ -434,6 +452,34 @@ class IrregularidadServiceImpl(IrregularidadService):
     async def validarExcepcion(self, notificacion_id: UUID):
         notificacion = await self.notificacion_service.get(notificacion_id)
         guia = await self.document_repo.get_by_id(notificacion.guia_aerea_id)
+        
+        # Analizar el tipo de alertas que generaron esta notificación
+        alertas = notificacion.meta_data.get("alertas", []) if notificacion.meta_data else []
+        hubo_alerta_peso = any("Peso" in a or "Z-score" in a or "subdeclaración" in a for a in alertas)
+        hubo_alerta_frecuencia = any("pitufeo" in a or "Frecuencia" in a for a in alertas)
+
+        # Aprendizaje Reforzado Dirigido
+        intervinientes = await self.guia_aerea_interviniente_service.get_by_guia_aerea_id(guia.guia_aerea_id)
+        
+        for t in intervinientes:
+             vector = await self.embedding_service.get_embedding(t.nombre)
+             perfil = await self.perfil_repo.find_by_vector_similarity(vector, t.rol_codigo, threshold=0.1)
+             
+             if perfil:
+                 modificado = False
+                 # Si la alerta fue por peso y este es el remitente (quien despacha el peso), se amplía tolerancia
+                 if hubo_alerta_peso and t.rol_codigo == Constantes.TipoInterviniente.REMITENTE:
+                     perfil.factor_tolerancia = (perfil.factor_tolerancia or 1.0) + 0.5
+                     modificado = True
+                     
+                 # Si la alerta fue por frecuencia (pitufeo) y este es el consignatario (quien recibe repetidamente)
+                 if hubo_alerta_frecuencia and t.rol_codigo == Constantes.TipoInterviniente.CONSIGNATARIO:
+                     perfil.factor_tolerancia = (perfil.factor_tolerancia or 1.0) + 0.5
+                     modificado = True
+                     
+                 if modificado:
+                     await self.perfil_repo.update(perfil.perfil_riesgo_id, perfil)
+                 
         await self.validar(guia)
         await self.notificacion_service.resolver(guia.guia_aerea_id)
         await self.auditoria_service.registrar_modificacion(
@@ -443,7 +489,7 @@ class IrregularidadServiceImpl(IrregularidadService):
             campo="estado_registro_codigo",
             valor_anterior="OBSERVADO",
             valor_nuevo="PROCESADO",
-            comentario="Validación de excepción de irregularidad (Aprendizaje reforzado)"
+            comentario="Validación de excepción de irregularidad (Aprendizaje reforzado -> Hubo ampliación de tolerancia del Perfil)"
         )
         await publish_user_notification(
             user_id=str(notificacion.usuario_id), 
@@ -454,6 +500,7 @@ class IrregularidadServiceImpl(IrregularidadService):
             severity="INFO",
             is_persistent=False
         )
+        return guia
 
     async def validar(self, guia: GuiaAerea ):
         intervinientes = await self.guia_aerea_interviniente_service.get_by_guia_aerea_id(guia.guia_aerea_id)
@@ -462,6 +509,9 @@ class IrregularidadServiceImpl(IrregularidadService):
              vector = await self.embedding_service.get_embedding(t.nombre)
              perfil = await self.perfil_repo.find_by_vector_similarity(vector, t.rol_codigo, threshold=0.1)
              
+             if not perfil:
+                 perfil = await self._crear_nuevo_perfil(t, vector, guia)
+                 
              if perfil:
                  await self._actualizar_estadisticas_perfil(perfil, guia, t.nombre)
 
@@ -479,3 +529,145 @@ class IrregularidadServiceImpl(IrregularidadService):
         nombre_sin_tildes = "".join([c for c in nfkd_form if not unicodedata.combining(c)])
         normalized = nombre_sin_tildes.upper().strip()
         return " ".join(normalized.split())
+
+    async def getRedVinculos(self, request: PerfilRiesgoFiltroRequest) -> "RedVinculosResponse":
+        from dto.perfil_riesgo_dtos import RedVinculosResponse, GrafoNodo, GrafoArco
+        # Coordenadas estáticas de aeropuertos principales
+        IATA_COORDS = {
+            "LIM": {"lat": -12.0219, "lng": -77.1143, "name": "Lima (LIM)"},
+            "MIA": {"lat": 25.7959, "lng": -80.2870, "name": "Miami (MIA)"},
+            "AMS": {"lat": 52.3105, "lng": 4.7683, "name": "Amsterdam (AMS)"},
+            "MAD": {"lat": 40.4839, "lng": -3.5680, "name": "Madrid (MAD)"},
+            "JFK": {"lat": 40.6413, "lng": -73.7781, "name": "New York (JFK)"},
+            "LAX": {"lat": 33.9416, "lng": -118.4085, "name": "Los Angeles (LAX)"},
+            "BOG": {"lat": 4.7016, "lng": -74.1469, "name": "Bogota (BOG)"},
+            "SCL": {"lat": -33.3930, "lng": -70.7858, "name": "Santiago (SCL)"},
+            "GRU": {"lat": -23.4356, "lng": -46.4731, "name": "Sao Paulo (GRU)"},
+            "YUL": {"lat": 45.4657, "lng": -73.7481, "name": "Montreal (YUL)"}
+        }
+
+        # Step 1: Calcular el rango de fechas para el filtro
+        # Si no se proporcionan fechas, usamos las últimas 24 horas por defecto
+        end_date = request.fechaFin or datetime.now()
+        start_date = request.fechaInicio or (end_date - timedelta(hours=24))
+
+        # Aseguramos que las fechas sean "naive" (sin zona horaria) para SQLAlchemy
+        # ya que el modelo GuiaAerea usa TIMESTAMP sin zona horaria.
+        if start_date and start_date.tzinfo:
+            start_date = start_date.replace(tzinfo=None)
+        if end_date and end_date.tzinfo:
+            end_date = end_date.replace(tzinfo=None)
+
+        # Step 1: Obtener las guías aéreas con sus intervinientes para el rango de fechas
+        guias = await self.document_repo.find_by_date_range(
+            start_date=start_date, 
+            end_date=end_date,
+            skip=request.start or 0, 
+            limit=request.limit or 1000 # Aumentamos el límite para el mapa
+        )
+        
+        nombres_perfil_filtro = None
+        tipo_interviniente_filtro = None
+        if getattr(request, 'perfilRiesgoId', None):
+            try:
+                perfil_id = UUID(request.perfilRiesgoId)
+                perfil = await self.perfil_repo.get_by_id(perfil_id)
+                if perfil:
+                    nombres_perfil_filtro = perfil.variaciones_nombre or []
+                    if perfil.nombre_normalizado and perfil.nombre_normalizado not in nombres_perfil_filtro:
+                        nombres_perfil_filtro.append(perfil.nombre_normalizado)
+                    tipo_interviniente_filtro = perfil.tipo_interviniente_codigo
+            except Exception as e:
+                logger.warning(f"Error loading Profile for Map Filter: {e}")
+
+        nodes_dict = {}
+        arcs_list = []
+        
+        # Primero aseguramos que todos los aeropuertos estén como nodos base
+        for code, data in IATA_COORDS.items():
+            nodes_dict[code] = GrafoNodo(
+                id=code, name=data["name"], lat=data["lat"], lng=data["lng"], 
+                type="airport", size=15, color="#4b5563"
+            )
+
+        # Para dispersión (jitter) visual para que las empresas no se monten exacto sobre el aeropuerto
+        import random
+        
+        for guia in guias:
+            origen = guia.origen_codigo or "LIM"
+            destino = guia.destino_codigo or "MIA"
+            
+            if origen not in IATA_COORDS or destino not in IATA_COORDS:
+                continue
+
+            # Obtener intervinientes de esta específica guía
+            intervinientes = await self.guia_aerea_interviniente_service.get_by_guia_aerea_id(guia.guia_aerea_id)
+            remitente = next((i for i in intervinientes if i.rol_codigo == Constantes.TipoInterviniente.REMITENTE), None)
+            consignatario = next((i for i in intervinientes if i.rol_codigo == Constantes.TipoInterviniente.CONSIGNATARIO), None)
+
+            if remitente and consignatario:
+                rem_name = self._normalize_name(remitente.nombre)
+                con_name = self._normalize_name(consignatario.nombre)
+                
+                if nombres_perfil_filtro and tipo_interviniente_filtro:
+                    matches = False
+                    if tipo_interviniente_filtro == Constantes.TipoInterviniente.REMITENTE:
+                        if remitente.nombre in nombres_perfil_filtro or rem_name in nombres_perfil_filtro:
+                            matches = True
+                    elif tipo_interviniente_filtro == Constantes.TipoInterviniente.CONSIGNATARIO:
+                        if consignatario.nombre in nombres_perfil_filtro or con_name in nombres_perfil_filtro:
+                            matches = True
+                    
+                    if not matches:
+                        continue
+                
+                # Crear nodos interactivos para las empresas si no existen:
+                if rem_name not in nodes_dict:
+                    nodes_dict[rem_name] = GrafoNodo(
+                        id=rem_name, name=rem_name, 
+                        lat=IATA_COORDS[origen]["lat"] + random.uniform(-1, 1), 
+                        lng=IATA_COORDS[origen]["lng"] + random.uniform(-1, 1), 
+                        type="sender", size=5, color="#3b82f6" # Azul
+                    )
+                else: 
+                     nodes_dict[rem_name].size += 1
+
+                if con_name not in nodes_dict:
+                    nodes_dict[con_name] = GrafoNodo(
+                        id=con_name, name=con_name, 
+                        lat=IATA_COORDS[destino]["lat"] + random.uniform(-1, 1), 
+                        lng=IATA_COORDS[destino]["lng"] + random.uniform(-1, 1), 
+                        type="consignee", size=5, color="#10b981" # Verde
+                    )
+                else:
+                     nodes_dict[con_name].size += 1
+
+                color_arco = "#8b5cf6" # Default Purple
+                if guia.estado_registro_codigo == Constantes.EstadoRegistroGuiaAereea.OBSERVADO:
+                    color_arco = "#ef4444" # Red para sospechas
+                
+                # Diferenciación visual basada en peso
+                peso = float(guia.peso_bruto or 0)
+                # Stroke entre 0.5 y 2.5 según peso (Base 0.5 + logaritmo o escala simple)
+                stroke_val = 0.5 + min(peso / 500, 2.0) 
+                # Altitud con un toque de aleatoriedad para que no se peguen las líneas
+                altitude_val = 0.1 + random.uniform(0.05, 0.4)
+
+                arcs_list.append(GrafoArco(
+                    id=str(guia.guia_aerea_id),
+                    startLat=nodes_dict[rem_name].lat,
+                    startLng=nodes_dict[rem_name].lng,
+                    endLat=nodes_dict[con_name].lat,
+                    endLng=nodes_dict[con_name].lng,
+                    color=color_arco,
+                    label=f"{rem_name} ➔ {con_name} ({guia.peso_bruto}kg)",
+                    sender=rem_name,
+                    consignee=con_name,
+                    altitude=altitude_val,
+                    stroke=stroke_val
+                ))
+
+        return RedVinculosResponse(
+            nodes=list(nodes_dict.values()),
+            arcs=arcs_list
+        )

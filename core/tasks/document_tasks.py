@@ -25,7 +25,7 @@ async def _process_validations_async(obj_req: str):
             await publish_user_notification(str(t.usuarioId), "INFO", f"Guía aérea N°{t.numero}: Intervinientes recibidos", str(t.guiaAereaId))
             doc = await contenedor.guia_aerea_service.apply_business_rules(t)
 
-            if Constantes.EstadoRegistroGuiaAereea.OBSERVADO == doc.estado_registro_codigo : 
+            if Constantes.EstadoRegistroGuiaAereea.OBSERVADO == doc.estado_registro_codigo: 
                 notificacion_request = NotificacionRequest(
                     notificacionId=uuid.uuid4(),
                     guiaAereaId=t.guiaAereaId,
@@ -46,8 +46,14 @@ async def _process_validations_async(obj_req: str):
                 )
                 return
             
-            await contenedor.manifiesto_service.associate_guia(doc)
+            
             await contenedor.irregularidad_service.detectar_irregularidades(doc, t.analisisContextual)
+            
+            doc_actualizado = await contenedor.guia_aerea_service.get(str(t.guiaAereaId))
+            if doc_actualizado.estado_registro_codigo == Constantes.EstadoRegistroGuiaAereea.OBSERVADO:
+                return
+
+            await contenedor.manifiesto_service.associate_guia(doc)
            
             await contenedor.auditoria_service.registrar_modificacion(
                 entidad_tipo=Constantes.TipoEntidadAuditoria.GUIA_AEREA,

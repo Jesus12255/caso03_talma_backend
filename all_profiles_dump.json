@@ -1,0 +1,40 @@
+[
+    {
+        "id": "164c2ccd-b4b7-4fd6-8b98-2369408c38b2",
+        "nombre": "EUROFOODS SPAIN S.L",
+        "envios": 1,
+        "tipo": "TPIN002",
+        "variaciones": [
+            "EuroFoods Spain S.L"
+        ]
+    },
+    {
+        "id": "a9b89fb8-7f18-4cb7-b802-d8b84c03679e",
+        "nombre": "FRESH EXPRESS NETHERLANDS B.V.",
+        "envios": 1,
+        "tipo": "TPIN002",
+        "variaciones": [
+            "Fresh Express Netherlands B.V."
+        ]
+    },
+    {
+        "id": "2c2b4c54-6c27-4e31-98fe-6bbadd4534db",
+        "nombre": "FRUTAS DEL VALLE EXPORT S.A.C.",
+        "envios": 4,
+        "tipo": "TPIN001",
+        "variaciones": [
+            "FRUTAS DEL VALLE EXPORT S.A.C.",
+            "FRUTAS DEL VALLE EXPORT",
+            "FRUTAS DEL VALLE E. S.A.C."
+        ]
+    },
+    {
+        "id": "9baef725-c85d-429c-be63-1a7f3d438d43",
+        "nombre": "TROPICAL FRUIT IMPORTS LLC",
+        "envios": 2,
+        "tipo": "TPIN002",
+        "variaciones": [
+            "Tropical Fruit Imports LLC"
+        ]
+    }
+]

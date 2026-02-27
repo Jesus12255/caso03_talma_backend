@@ -132,6 +132,7 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         )
         return data, total_count
 
+
     async def get(self, documentoId: str) -> GuiaAerea:
         documento = await self.document_repository.get_by_id(documentoId)
         if documento is not None:
@@ -216,26 +217,40 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         guia_aerea.confidence_instrucciones_especiales = Constantes.VALIDATE_MANUAL_CONFIDENCE
 
         guia_aerea.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.PROCESADO
+        guia_aerea.observaciones = Constantes.EMPTY
 
         await self._validar_duplicados(guia_aerea)
         await self._validar_numero_formato(guia_aerea)
 
+        # Always save the document state (even if OBSERVADO), so manual edits and observations persist
+        guia_aerea.confidence_total = Constantes.VALIDATE_MANUAL_CONFIDENCE
+        guia_aerea.estado_confianza_codigo = Constantes.EstadoConfianza.REVISION_MANUAL
+        guia_aerea.modificado = DateUtil.get_current_local_datetime()
+        guia_aerea.modificado_por = self.session.full_name
+        await self.document_repository.save(guia_aerea)
+
+        # Registrar auditoría de la modificación completa por reprocesamiento
+        await self.audit_service.registrar_modificacion(
+            entidad_tipo=Constantes.TipoEntidadAuditoria.GUIA_AEREA,
+            entidad_id=guia_aerea.guia_aerea_id,
+            numero_documento=guia_aerea.numero,
+            campo="VARIOS (REPROCESAMIENTO)",
+            valor_anterior="Snapshot capturado en datos_adicionales",
+            valor_nuevo="Valores actualizados manualmente",
+            comentario="Actualización manual y reprocesamiento de la guía aérea",
+            accion_tipo_codigo=Constantes.TipoAccionAuditoria.MODIFICADO,
+            datos_adicionales=snapshot_anterior
+        )
+
         if Constantes.EstadoRegistroGuiaAereea.PROCESADO == guia_aerea.estado_registro_codigo:
-            guia_aerea.confidence_total = Constantes.VALIDATE_MANUAL_CONFIDENCE
-            guia_aerea.estado_confianza_codigo = Constantes.EstadoConfianza.REVISION_MANUAL
-            guia_aerea.observaciones = Constantes.EMPTY
-            guia_aerea.modificado = DateUtil.get_current_local_datetime()
-            guia_aerea.modificado_por = self.session.full_name
-            await self.document_repository.save(guia_aerea)
-            
             await publish_user_notification(str(self.session.user_id), "INFO", f"Guía aérea N°{t.numero}: Actualizado correctamente! Procesando información adicional", str(t.guiaAereaId))
             await self.guia_aerea_interviniente_service.saveAndReprocess(t)
             await publish_user_notification(str(self.session.user_id), "INFO", f"Guía aérea N°{t.numero}: Información adicional procesada correctamente!", str(t.guiaAereaId))
             
             await self.associate_guia(guia_aerea) 
             await publish_user_notification(str(self.session.user_id), "SUCCESS", f"Guía aérea N°{t.numero}: Proceso de actualización finalizado correctamente.", str(t.guiaAereaId))
-            await self.irregularidad_service.detectar_irregularidades(guia_aerea)
             await self.notificacion_service.resolver(guia_aerea.guia_aerea_id)
+            await self.irregularidad_service.detectar_irregularidades(guia_aerea)
         return guia_aerea
 
     async def associate_guia(self, t: GuiaAerea):
@@ -353,9 +368,11 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         guia_aerea.modificado = DateUtil.get_current_local_datetime()
         guia_aerea.modificado_por = Constantes.SYSTEM_USER
 
-        # Persistir observaciones del análisis contextual IA
-        if doc.observaciones:
-            guia_aerea.observaciones = doc.observaciones
+        # Persistir observaciones del análisis contextual IA appendings a las internas
+        if doc.observaciones and doc.observaciones.strip().lower() != "sin irregularidades detectadas":
+            current_obs = guia_aerea.observaciones or ""
+            if doc.observaciones not in current_obs:
+                guia_aerea.observaciones = (current_obs + "\n" + doc.observaciones).strip()
 
         # Si la IA detectó ilegalidad o inconsistencias → forzar REVISION_MANUAL
         analisis = doc.analisisContextual or {}

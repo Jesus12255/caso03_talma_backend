@@ -3,6 +3,8 @@ from app.core.domain.guia_aerea import GuiaAerea
 from abc import ABC, abstractmethod
 
 
+from dto.perfil_riesgo_dtos import PerfilRiesgoFiltroRequest, RedVinculosResponse
+
 class IrregularidadService(ABC):
 
     @abstractmethod
@@ -15,4 +17,8 @@ class IrregularidadService(ABC):
 
     @abstractmethod
     async def validar(self, guia: GuiaAerea ):
+        pass
+
+    @abstractmethod
+    async def getRedVinculos(self, request: PerfilRiesgoFiltroRequest) -> RedVinculosResponse:
         pass

@@ -31,6 +31,7 @@ class PerfilRiesgoDataGridResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class PerfilRiesgoFiltroRequest(BaseRequest):
+    perfilRiesgoId: Optional[str] = None
     nombreNormalizado: Optional[str] = None
     tipoIntervinienteCodigo: Optional[str] = None
     cantidadEnviosMaximo: Optional[int] = None
@@ -90,3 +91,35 @@ class PerfilRiesgoDispersionResponse(BaseModel):
     puntos: Optional[List[DatapointDispersion]] = []
     
     model_config = ConfigDict(from_attributes=True)
+
+class GrafoNodo(BaseModel):
+    id: str  # IATA o Interviniente ID
+    name: str # Nombre ciudad o Nombre Interviniente
+    lat: float
+    lng: float
+    type: str # 'airport', 'sender', 'consignee'
+    size: float
+    color: str
+    
+class GrafoArco(BaseModel):
+    id: Optional[str] = None # AWB ID or Number
+    startLat: float
+    startLng: float
+    endLat: float
+    endLng: float
+    color: str
+    label: str
+    sender: Optional[str] = None
+    consignee: Optional[str] = None
+    altitude: Optional[float] = 0.2
+    stroke: Optional[float] = 1.0
+
+class RedVinculosResponse(BaseModel):
+    nodes: List[GrafoNodo] = []
+    arcs: List[GrafoArco] = []
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class CambiarListaRequest(BaseModel):
+    perfil_riesgo_id: UUID
+    nueva_lista: str 

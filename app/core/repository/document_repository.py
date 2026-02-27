@@ -1,10 +1,16 @@
-from abc import  abstractmethod
+from datetime import datetime
+from abc import abstractmethod
 from typing import Optional, List
 from app.integration.base_repository import BaseRepository
 from app.core.domain.guia_aerea import GuiaAerea
 
 class DocumentRepository(BaseRepository[GuiaAerea]):
-    
+
+    @abstractmethod
+    async def find_by_date_range(self, start_date: datetime, end_date: datetime, skip: int = 0, limit: int = 100) -> List[GuiaAerea]:
+        """Finds all air waybills within a specific flight date range."""
+        pass
+
     @abstractmethod
     async def find_by_numero(self, numero: str, exclude_id: Optional[str] = None) -> Optional[GuiaAerea]:
         pass

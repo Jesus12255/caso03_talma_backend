@@ -40,21 +40,45 @@ class DocumentRepositoryImpl(BaseRepositoryImpl[GuiaAerea], DocumentRepository):
     
     async def find_recent_by_consignee_names(self, nombres: List[str], hours: int = 24) -> List[GuiaAerea]:
         cutoff_time = datetime.now() - timedelta(hours=hours)
-        query = select(GuiaAerea).join(GuiaAerea.intervinientes).where(
-            GuiaAereaInterviniente.nombre.in_(nombres),
-            GuiaAereaInterviniente.rol_codigo == Constantes.TipoInterviniente.CONSIGNATARIO,
-            GuiaAerea.creado >= cutoff_time
+        
+        # We select distinct by numero to avoid counting multiple versions of same guide
+        # that might be enabled (though there should only be one)
+        inner_query = (
+            select(GuiaAerea.numero)
+            .join(GuiaAerea.intervinientes)
+            .where(
+                GuiaAereaInterviniente.nombre.in_(nombres),
+                GuiaAereaInterviniente.rol_codigo == Constantes.TipoInterviniente.CONSIGNATARIO,
+                GuiaAerea.creado >= cutoff_time,
+                GuiaAerea.habilitado.is_(Constantes.HABILITADO)
+            )
+            .distinct()
         )
+        
+        # To return the actual objects, we must apply the same filters in the outer query
+        # to ensure we don't pick up disabled versions of the same numbers.
+        sub = inner_query.subquery()
+        query = (
+            select(GuiaAerea)
+            .where(
+                GuiaAerea.numero.in_(select(sub.c.numero)),
+                GuiaAerea.habilitado.is_(Constantes.HABILITADO),
+                GuiaAerea.creado >= cutoff_time
+            )
+        )
+        
         result = await self.db.execute(query)
-        return result.scalars().all()
+        return result.scalars().all() 
     
     async def count_unique_consignees_for_sender(self, sender_names: List[str]) -> int:
-        # Subquery to find GuiaAerea IDs where the sender is present (using any variation)
+        # Filter by enabled guides
         sender_subquery = (
             select(GuiaAereaInterviniente.guia_aerea_id)
+            .join(GuiaAerea, GuiaAerea.guia_aerea_id == GuiaAereaInterviniente.guia_aerea_id)
             .where(
                 GuiaAereaInterviniente.nombre.in_(sender_names),
-                GuiaAereaInterviniente.rol_codigo == Constantes.TipoInterviniente.REMITENTE
+                GuiaAereaInterviniente.rol_codigo == Constantes.TipoInterviniente.REMITENTE,
+                GuiaAerea.habilitado.is_(Constantes.HABILITADO)
             )
         )
 
@@ -65,5 +89,19 @@ class DocumentRepositoryImpl(BaseRepositoryImpl[GuiaAerea], DocumentRepository):
         
         result = await self.db.execute(query)
         return result.scalar() or 0
+
+    async def find_by_date_range(self, start_date: datetime, end_date: datetime, skip: int = 0, limit: int = 100) -> List[GuiaAerea]:
+        query = (
+            select(GuiaAerea)
+            .where(
+                GuiaAerea.fecha_vuelo.between(start_date, end_date),
+                GuiaAerea.habilitado.is_(Constantes.HABILITADO)
+            )
+            .options(selectinload(GuiaAerea.intervinientes))
+            .offset(skip)
+            .limit(limit)
+        )
+        result = await self.db.execute(query)
+        return result.scalars().all()
     
     
