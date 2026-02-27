@@ -5,6 +5,7 @@ import logging
 from typing import List, TypedDict, AsyncGenerator, Tuple, Optional
 from pathlib import Path
 from fastapi import UploadFile
+from uuid import UUID
 
 from app.core.facade.document_facade import DocumentFacade
 from app.core.services.analyze_service import AnalyzeService
@@ -215,7 +216,7 @@ class AnalyzeServiceImpl(AnalyzeService, FacadeBase):
             guia = self._build_guia(doc)
             if not guia:
                 continue
-            guia.usuarioId = self.session.user_id
+            guia.usuarioId = UUID(self.session.user_id) if self.session.user_id else None
             
             # Batch deduplication
             if guia.numero and guia.numero in seen_numeros:

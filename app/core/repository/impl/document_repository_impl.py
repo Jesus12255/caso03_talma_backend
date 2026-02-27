@@ -1,12 +1,15 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.domain.guia_aerea import  GuiaAerea
-from sqlalchemy import select
+from sqlalchemy import select, func, distinct
 import uuid
 from sqlalchemy.orm import selectinload
 
 from app.core.repository.document_repository import DocumentRepository
 from app.integration.impl.base_repository_impl import BaseRepositoryImpl
 from utl.constantes import Constantes
+from app.core.domain.guia_aerea_interviniente import GuiaAereaInterviniente
+from datetime import datetime, timedelta
+from typing import List
 
 
 
@@ -30,10 +33,75 @@ class DocumentRepositoryImpl(BaseRepositoryImpl[GuiaAerea], DocumentRepository):
 
     async def get_by_id_with_relations(self, id: str) -> GuiaAerea | None:
         query = select(GuiaAerea).where(GuiaAerea.guia_aerea_id == id).options(
-            selectinload(GuiaAerea.confianzas_extraccion),
             selectinload(GuiaAerea.intervinientes)
         )
         result = await self.db.execute(query)
         return result.scalars().first()
+    
+    async def find_recent_by_consignee_names(self, nombres: List[str], hours: int = 24) -> List[GuiaAerea]:
+        cutoff_time = datetime.now() - timedelta(hours=hours)
+        
+        # We select distinct by numero to avoid counting multiple versions of same guide
+        # that might be enabled (though there should only be one)
+        inner_query = (
+            select(GuiaAerea.numero)
+            .join(GuiaAerea.intervinientes)
+            .where(
+                GuiaAereaInterviniente.nombre.in_(nombres),
+                GuiaAereaInterviniente.rol_codigo == Constantes.TipoInterviniente.CONSIGNATARIO,
+                GuiaAerea.creado >= cutoff_time,
+                GuiaAerea.habilitado.is_(Constantes.HABILITADO)
+            )
+            .distinct()
+        )
+        
+        # To return the actual objects, we must apply the same filters in the outer query
+        # to ensure we don't pick up disabled versions of the same numbers.
+        sub = inner_query.subquery()
+        query = (
+            select(GuiaAerea)
+            .where(
+                GuiaAerea.numero.in_(select(sub.c.numero)),
+                GuiaAerea.habilitado.is_(Constantes.HABILITADO),
+                GuiaAerea.creado >= cutoff_time
+            )
+        )
+        
+        result = await self.db.execute(query)
+        return result.scalars().all() 
+    
+    async def count_unique_consignees_for_sender(self, sender_names: List[str]) -> int:
+        # Filter by enabled guides
+        sender_subquery = (
+            select(GuiaAereaInterviniente.guia_aerea_id)
+            .join(GuiaAerea, GuiaAerea.guia_aerea_id == GuiaAereaInterviniente.guia_aerea_id)
+            .where(
+                GuiaAereaInterviniente.nombre.in_(sender_names),
+                GuiaAereaInterviniente.rol_codigo == Constantes.TipoInterviniente.REMITENTE,
+                GuiaAerea.habilitado.is_(Constantes.HABILITADO)
+            )
+        )
+
+        query = select(func.count(distinct(GuiaAereaInterviniente.nombre))).where(
+            GuiaAereaInterviniente.guia_aerea_id.in_(sender_subquery),
+            GuiaAereaInterviniente.rol_codigo == Constantes.TipoInterviniente.CONSIGNATARIO
+        )
+        
+        result = await self.db.execute(query)
+        return result.scalar() or 0
+
+    async def find_by_date_range(self, start_date: datetime, end_date: datetime, skip: int = 0, limit: int = 100) -> List[GuiaAerea]:
+        query = (
+            select(GuiaAerea)
+            .where(
+                GuiaAerea.fecha_vuelo.between(start_date, end_date),
+                GuiaAerea.habilitado.is_(Constantes.HABILITADO)
+            )
+            .options(selectinload(GuiaAerea.intervinientes))
+            .offset(skip)
+            .limit(limit)
+        )
+        result = await self.db.execute(query)
+        return result.scalars().all()
     
     

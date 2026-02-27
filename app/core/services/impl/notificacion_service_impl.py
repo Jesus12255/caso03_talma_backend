@@ -51,13 +51,17 @@ class NotificacionServiceImpl(NotificacionService, ServiceBase):
     async def resolver(self, guia_aerea_id: UUID):
         notificaciones = await self.notificacion_repository.find_by_guia_aerea_id(guia_aerea_id)
         if not notificaciones:
-            return 
+            return
+            
+        modificado_por = getattr(self.session, 'full_name', None) or 'SYSTEM'
             
         for notificacion in notificaciones:
             notificacion.estado_codigo = Constantes.EstadoNotificacion.RESUELTO
             notificacion.modificado = DateUtil.get_current_local_datetime()
-            notificacion.modificado_por = self.session.full_name
+            notificacion.modificado_por = modificado_por
             notificacion.habilitado = Constantes.INHABILITADO
+            
+            await self.notificacion_repository.save(notificacion)
             
             try:
                 await publish_user_notification(
@@ -68,9 +72,11 @@ class NotificacionServiceImpl(NotificacionService, ServiceBase):
                 )
             except Exception as e:
                 print(f"Error publishing resolution event: {e}")
-            
-            await self.notificacion_repository.save(notificacion)
 
 
         
-       
+    async def get(self, notificacion_id: UUID) -> Notificacion:
+        notificacion = await self.notificacion_repository.get_by_id(notificacion_id)
+        if not notificacion:
+            raise AppBaseException("Notificacion no encontrada")
+        return notificacion

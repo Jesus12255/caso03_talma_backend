@@ -1,67 +1,41 @@
 import os
-import sys
 import subprocess
-import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
+import sys
 
-
-# Define a simple handler for health checks
-class HealthCheckHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"OK")
-
-    def log_message(self, format, *args):
-        pass  # Silence logs to avoid clutter
-
-
-# Get configuration
-service_type = os.getenv("SERVICE_TYPE", "api")
-# Cloud Run always provides a PORT env var (default 8080)
-port = int(os.getenv("PORT", "8080"))
-
-if service_type == "worker":
-    # --- WORKER MODE ---
-    # Cloud Run requires the container to listen on $PORT for health checks.
-    # Celery doesn't do this natively, so we run a background thread with a dummy HTTP server.
-
-    print(f"Starting dummy health check server on port {port}...")
-
-    def start_health_server():
-        try:
-            server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
-            server.serve_forever()
-        except Exception as e:
-            print(f"Health check server failed: {e}")
-
-    # Start the HTTP server in a daemon thread
-    health_thread = threading.Thread(target=start_health_server, daemon=True)
-    health_thread.start()
-
-    # Now run the actual Celery Worker in the main process
-    print("Starting Celery worker...")
+def run_api():
+    print("🚀 Starting FastAPI Server...")
+    # Using uvicorn to run the app
+    # host 0.0.0.0 is necessary for Docker/Cloud Run
+    # port 8080 matches Dockerfile and Cloud Run default
     cmd = [
-        "celery",
-        "-A",
-        "core.celery.celery_app",
-        "worker",
-        "--loglevel=info",
-        "--pool=threads",
-        "--concurrency=20",
-        "-Q",
-        "document_queue,celery",
+        "uvicorn", 
+        "main:app", 
+        "--host", "0.0.0.0", 
+        "--port", "8080", 
+        "--workers", "1"  # Keep it simple for start
     ]
+    subprocess.run(cmd)
 
-    # Use subprocess instead of execvp to keep the python process (and health thread) alive
-    result = subprocess.run(cmd)
-    sys.exit(result.returncode)
+def run_worker():
+    print("📦 Starting Celery Worker (Pool: SOLO)...")
+    # Exact command requested by user:
+    # celery -A core.celery.celery_app worker --loglevel=info --pool=solo
+    cmd = [
+        "celery", 
+        "-A", "core.celery.celery_app", 
+        "worker", 
+        "--loglevel=info", 
+        "--pool=solo"
+    ]
+    subprocess.run(cmd)
 
-else:
-    # --- API MODE ---
-    # For the API, we simply run Uvicorn on the requested port.
-    print(f"Starting API on port {port}...")
-    cmd = ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", str(port)]
-
-    # Replace the current process with uvicorn
-    os.execvp(cmd[0], cmd)
+if __name__ == "__main__":
+    service_type = os.getenv("SERVICE_TYPE", "api").lower()
+    
+    if service_type == "api":
+        run_api()
+    elif service_type == "worker":
+        run_worker()
+    else:
+        print(f"❌ Unknown SERVICE_TYPE: {service_type}")
+        sys.exit(1)

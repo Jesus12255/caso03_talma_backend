@@ -1,4 +1,5 @@
 import json
+from datetime import date as _date
 import asyncio
 import base64
 import logging
@@ -18,7 +19,44 @@ masked_key = f"{settings.LLM_API_KEY[:3]}...{settings.LLM_API_KEY[-3:]}" if key_
 
 class ExtractionEngineImpl(ExtractionEngine):
 
+    def _repair_json(self, text: str) -> str:
+        start_idx = -1
+        for i, c in enumerate(text):
+            if c in ['{', '[']:
+                start_idx = i
+                break
+        if start_idx == -1: return text
+        
+        stack = []
+        in_string = False
+        escape = False
+        for i in range(start_idx, len(text)):
+            char = text[i]
+            if not escape and char == '"':
+                in_string = not in_string
+            if not in_string:
+                if char in ['{', '[']:
+                    stack.append(char)
+                elif char == '}':
+                    if stack and stack[-1] == '{':
+                        stack.pop()
+                        if not stack:
+                            return text[start_idx:i+1]
+                elif char == ']':
+                    if stack and stack[-1] == '[':
+                        stack.pop()
+                        if not stack:
+                            return text[start_idx:i+1]
+            
+            if char == '\\' and not escape:
+                escape = True
+            else:
+                escape = False
+                
+        return text
+
     async def extract_single_document(self, base64_data: str, mime_type: str, page_count: int, start_index: int) -> list[dict]:
+        today = _date.today().strftime("%Y-%m-%d")
         client = genai.Client(api_key=settings.LLM_API_KEY)
         
         is_pdf = mime_type == "application/pdf"
@@ -69,6 +107,8 @@ Usa tu conocimiento del formato IATA Air Waybill para inferir qué es cada dato:
 - **Valores Numéricos**:
     - Enteros pequeños (1-1000) a la izquierda de un peso suelen ser "cantidadPiezas".
     - Números con decimales seguidos de "K", "KG", "L", "LB" son "pesoBruto".
+    - **pesoCobrado (Chargeable Weight):** Es un PESO en kilogramos/libras que aparece explícitamente en la columna "Chargeable Weight" o "Gross Weight" de la guía. NUNCA es una cantidad monetaria ni un resultado de multiplicar peso × tarifa. Si el documento no muestra un peso cobrable distinto al peso bruto, deja `pesoCobrado` en null.
+    - **totalFlete:** Es la cantidad monetaria total del flete (ej. 182.00 USD). NUNCA la uses como `pesoCobrado`.
     - Valores monetarios (decimales) en columnas alineadas a la derecha suelen ser "totalFlete" o cargos.
 - **Códigos**: 
     - "PP" o "CC" aislados indican "tipoFleteCodigo" (Prepaid/Collect).
@@ -97,7 +137,43 @@ REGLAS ESPECÍFICAS DE NEGOCIO (IMPORTANTE):
 
 VALIDACIÓN:
 Si el documento NO es una Guía Aérea, devuelve: { "error": "DOCUMENTO_INVALIDO", "mensaje": "..." }.
-"""
+
+ANÁLISIS CONTEXTUAL (MUY IMPORTANTE):
+**FECHA DE HOY (referencia para evaluación temporal): {today}**
+Ademas de extraer datos, debes evaluar la coherencia y legalidad de la guía. Incluye SIEMPRE el bloque `analisisContextual` en tu respuesta con:
+1. **esIlegal** (boolean): true si la mercancía incluye o sugiere contenido prohibido: estupefacientes, armas, explosivos, fauna/flora protegida, bienes embargados, material radioactivo no declarado, etc.
+2. **tieneInconsistencias** (boolean): true si los datos de la guía no son coherentes entre sí aunque sean legales. Ejemplos:
+   - Descripción vaga de 1 o 2 palabras (ej. 'carga', 'goods', 'merchandise')
+   - Peso declarado imposible o inusual para el tipo de mercancía (ej. 5000 kg de 'joyas')
+   - Valor declarado USD 0 o sospechosamente bajo para el peso
+   - Ruta ilógica para el tipo de producto (ej. flores frescas en vuelo de 30 horas sin trasbordo frigorífico)
+   - Ciudad de origen incoherente con el país declarado
+   - Sin nombre de empresa en remitente o consignatario
+   - **IMPORTANTE**: Una fecha de emisión o vuelo cercana a la fecha de hoy ({today}) NO es una inconsistencia. Solo marca como inconsistencia si la fecha está MÁS DE 30 DÍAS en el futuro respecto a hoy.
+3. **irregularidades** (list[str]): explicación concisa de cada hallazgo, una frase por ítem.
+4. **observaciones** (str): resumen textual de todos los hallazgos. Si todo está correcto, escribe 'Sin irregularidades detectadas'.
+
+REGLAS DE CONFIANZA (CRÍTICO — leer con atención):
+Las confianzas SOLO deben incluirse para campos que tienen un valor extraído (no null). NUNCA incluyas una confianza para un campo que es null o que no aparece en el documento — eso sería auto-penalizarte incorrectamente.
+
+Cuándo asignar confianza ALTA (≥ 0.90):
+- El texto en el documento es claro, nítido y sin ambigüedad.
+- El valor extraído es coherente con el resto de la guía.
+
+Cuándo asignar confianza MEDIA (0.60 – 0.89):
+- El texto es legible pero hay algo de ambigüedad (ej. letra manuscrita, tachones leves).
+- El valor extraído parece correcto pero no se puede verificar con certeza al 100%.
+- Inferiste el dato a partir de contexto (ej. código IATA a partir del nombre de ciudad).
+
+Cuándo asignar confianza BAJA (≤ 0.50):
+- El campo fue extraído pero el texto es borroso, ilegible o podría ser otro valor.
+- El valor extraído es semánticamente inconsistente con otros campos (ej. peso de 5000 kg para 'joyas').
+- El campo contiene mercancía ilegal o prohibida — la baja confianza señala el problema.
+- La descripción es intencionalmente vaga (ej. 'carga', 'goods', 'merchandise sin descripción').
+- El valor es físicamente imposible (ej. valorDeclarado = 0 con totalFlete = 15000).
+
+NUNCA pongas confianza baja simplemente porque el campo es opcional y no está en el documento.
+""".replace("{today}", today)
 
         few_shot_structure = """
 Estructura esperada:
@@ -148,7 +224,15 @@ Estructura esperada:
         "monedaCodigo": "EUR",
         "totalFlete": 12160.00,
         "instruccionesEspeciales": "Asegurar correctamente la carga",
-        "observaciones": "Algunos textos con baja nitidez",
+        "observaciones": "Peso de 5100 kg inusual para componentes metálicos de pequeño tamaño declarados",
+        "analisisContextual": {
+            "esIlegal": false,
+            "tieneInconsistencias": true,
+            "irregularidades": [
+                "Peso bruto (5100 kg) inusual para la cantidad de piezas (60) declaradas",
+                "Descripción de mercancía genérica: 'Componentes metálicos para maquinaria'"
+            ]
+        },
         "confianzas": [
             { "nombreCampo": "numero", "valorExtraido": "145-55443322", "confidenceModelo": 0.93 },
             { "nombreCampo": "fechaEmision", "valorExtraido": "2025-10-02T14:25:00", "confidenceModelo": 0.92 },
@@ -301,10 +385,6 @@ Formato requerido:
                 
                 if response.text:
                     text = response.text.strip()
-                    logger.info(f"========== AI RESPONSE COMPLETA PARA INDEX {start_index} ==========")
-                    logger.info(f"Respuesta completa de IA:\n{text}")
-                    logger.info(f"========== FIN AI RESPONSE ==========")
-                    
                     if text.startswith("```"):
                         lines = text.splitlines()
                         if lines[0].startswith("```"): lines = lines[1:]
@@ -314,8 +394,13 @@ Formato requerido:
                     try:
                         result_data = json.loads(text)
                     except json.JSONDecodeError:
-                        logger.error(f"JSON ERROR for index {start_index}: {text}")
-                        return [{"document_index": start_index, "error": "LLM returned invalid JSON"}]
+                        fixed_text = self._repair_json(text)
+                        try:
+                            result_data = json.loads(fixed_text)
+                            logger.info(f"Successfully repaired JSON for index {start_index}")
+                        except json.JSONDecodeError:
+                            logger.error(f"JSON ERROR for index {start_index}: {text}")
+                            return [{"document_index": start_index, "error": "LLM returned invalid JSON"}]
 
                     extracted_list = []
                     if isinstance(result_data, list):
@@ -332,17 +417,6 @@ Formato requerido:
                         if not isinstance(item, dict): continue
                         if "document_index" not in item: item["document_index"] = start_index
                         if "document_name" not in item: item["document_name"] = f"Documento {start_index}"
-                        
-                        # Log de intervinientes y confianzas
-                        if "intervinientes" in item:
-                            logger.info(f"Intervinientes extraídos: {json.dumps(item['intervinientes'], indent=2, ensure_ascii=False)}")
-                        if "confianzas" in item:
-                            logger.info(f"Confianzas extraídas ({len(item['confianzas'])} campos):")
-                            for conf in item['confianzas']:
-                                logger.info(f"  - {conf.get('nombreCampo')}: {conf.get('confidenceModelo')}")
-                        
-                        # Fix: Si la IA devuelve la estructura plana, la respetamos
-                        # No envolvemos forzosamente en 'fields'
                         pass
                     
                     return extracted_list

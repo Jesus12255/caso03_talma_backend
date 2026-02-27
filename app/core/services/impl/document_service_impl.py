@@ -1,13 +1,17 @@
 
 
+from app.core.services.IrregularidadService import IrregularidadService
 from app.core.repository.manifiesto_repository import ManifiestoRepository
 import uuid
 from app.core.domain.manifiesto import Manifiesto
 from dto.guia_aerea_dtos import DeleteAllGuiaAereaRequest
 from app.core.services.notificacion_service import NotificacionService
+from app.core.services.audit_service import AuditService
 from core.realtime.publisher import publish_user_notification
 from typing import List
 from uuid import UUID
+from datetime import datetime
+from decimal import Decimal
 
 from app.core.domain.confianza_extraccion import ConfianzaExtraccion
 from app.core.domain.guia_aerea import  GuiaAerea
@@ -23,7 +27,7 @@ from config.mapper import Mapper
 from core.exceptions import AppBaseException
 from core.service.service_base import ServiceBase
 from dto.confianza_extraccion_dtos import GuiaAereaConfianzaRequest
-from dto.guia_aerea_dtos import  GuiaAereaFiltroRequest, GuiaAereaRequest, GuiaAereaSubsanarRequest
+from dto.guia_aerea_dtos import  GuiaAereaFiltroRequest, GuiaAereaRequest, GuiaAereaSubsanarRequest, GuiaAereaDataGridResponse
 from utl.constantes import Constantes
 from utl.date_util import DateUtil
 import re
@@ -35,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 class DocumentServiceImpl(DocumentService, ServiceBase):
 
-    def __init__(self, document_repository: DocumentRepository, guia_aerea_filtro_repository:GuiaAereaFiltroRepository , interviniente_service: IntervinienteService, confianza_extraccion_service: ConfianzaExtraccionService, confianza_extraccion_repository : ConfianzaExtraccionRepository, guia_aerea_interviniente_service: GuiaAereaIntervinienteService, notificacion_service: NotificacionService, manifiesto_repository: ManifiestoRepository):
+    def __init__(self, document_repository: DocumentRepository, guia_aerea_filtro_repository:GuiaAereaFiltroRepository , interviniente_service: IntervinienteService, confianza_extraccion_service: ConfianzaExtraccionService, confianza_extraccion_repository : ConfianzaExtraccionRepository, guia_aerea_interviniente_service: GuiaAereaIntervinienteService, notificacion_service: NotificacionService, manifiesto_repository: ManifiestoRepository, audit_service: AuditService, irregularidad_service: IrregularidadService):
         self.document_repository = document_repository
         self.guia_aerea_filtro_repository = guia_aerea_filtro_repository
         self.interviniente_service = interviniente_service
@@ -44,6 +48,8 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         self.guia_aerea_interviniente_service = guia_aerea_interviniente_service
         self.notificacion_service = notificacion_service
         self.manifiesto_repository = manifiesto_repository
+        self.audit_service = audit_service
+        self.irregularidad_service = irregularidad_service
 
     async def saveOrUpdate(self, t: GuiaAereaRequest):
         documento = None
@@ -51,14 +57,16 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         documento.habilitado = Constantes.HABILITADO
         documento.creado = DateUtil.get_current_local_datetime()
         documento.creado_por = self.session.full_name
-        documento.usuario_id = self.session.user_id
+        documento.usuario_id = UUID(self.session.user_id) if self.session.user_id else None
         documento.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.PROCESANDO
         await self.document_repository.save(documento)
         t.guiaAereaId = documento.guia_aerea_id
-        
         await publish_document_update("INFO", f"Documento N°{documento.numero} guardado, procesando información adicional", documento.guia_aerea_id)
-        
-            
+        await self.audit_service.registrar_creacion(
+            entidad_tipo=Constantes.TipoEntidadAuditoria.GUIA_AEREA,
+            entidad_id=documento.guia_aerea_id,
+            numero_documento=documento.numero
+        ) 
 
     async def save_all_confianza_extraccion(self, t: GuiaAereaRequest):
         confianzas_extraccion = []
@@ -124,14 +132,23 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         )
         return data, total_count
 
+
     async def get(self, documentoId: str) -> GuiaAerea:
         documento = await self.document_repository.get_by_id(documentoId)
         if documento is not None:
             return documento
         raise AppBaseException("El documento no se encuentra registrado")
 
+    async def getManifiesto(self, manifiesto_id: UUID) -> Manifiesto:
+        manifiesto = await self.manifiesto_repository.get_by_id(manifiesto_id)
+        if manifiesto is not None:
+            return manifiesto
+        raise AppBaseException("El manifiesto no se encuentra registrado")
+
     async def updateAndReprocess(self, t: GuiaAereaSubsanarRequest):
         guia_aerea = await self.get(t.guiaAereaId)
+        snapshot_anterior = self._serialize_guia(guia_aerea)
+
         guia_aerea.guia_aerea_id = t.guiaAereaId
         guia_aerea.numero = t.numero
         guia_aerea.confidence_numero = Constantes.VALIDATE_MANUAL_CONFIDENCE
@@ -200,29 +217,40 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         guia_aerea.confidence_instrucciones_especiales = Constantes.VALIDATE_MANUAL_CONFIDENCE
 
         guia_aerea.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.PROCESADO
+        guia_aerea.observaciones = Constantes.EMPTY
 
         await self._validar_duplicados(guia_aerea)
         await self._validar_numero_formato(guia_aerea)
 
+        # Always save the document state (even if OBSERVADO), so manual edits and observations persist
+        guia_aerea.confidence_total = Constantes.VALIDATE_MANUAL_CONFIDENCE
+        guia_aerea.estado_confianza_codigo = Constantes.EstadoConfianza.REVISION_MANUAL
+        guia_aerea.modificado = DateUtil.get_current_local_datetime()
+        guia_aerea.modificado_por = self.session.full_name
+        await self.document_repository.save(guia_aerea)
+
+        # Registrar auditoría de la modificación completa por reprocesamiento
+        await self.audit_service.registrar_modificacion(
+            entidad_tipo=Constantes.TipoEntidadAuditoria.GUIA_AEREA,
+            entidad_id=guia_aerea.guia_aerea_id,
+            numero_documento=guia_aerea.numero,
+            campo="VARIOS (REPROCESAMIENTO)",
+            valor_anterior="Snapshot capturado en datos_adicionales",
+            valor_nuevo="Valores actualizados manualmente",
+            comentario="Actualización manual y reprocesamiento de la guía aérea",
+            accion_tipo_codigo=Constantes.TipoAccionAuditoria.MODIFICADO,
+            datos_adicionales=snapshot_anterior
+        )
+
         if Constantes.EstadoRegistroGuiaAereea.PROCESADO == guia_aerea.estado_registro_codigo:
-            guia_aerea.confidence_total = Constantes.VALIDATE_MANUAL_CONFIDENCE
-            guia_aerea.estado_confianza_codigo = Constantes.EstadoConfianza.REVISION_MANUAL
-            guia_aerea.observaciones = Constantes.EMPTY
-            
-            guia_aerea.modificado = DateUtil.get_current_local_datetime()
-            guia_aerea.modificado_por = self.session.full_name
-            
-            
-            await self.document_repository.save(guia_aerea)
             await publish_user_notification(str(self.session.user_id), "INFO", f"Guía aérea N°{t.numero}: Actualizado correctamente! Procesando información adicional", str(t.guiaAereaId))
             await self.guia_aerea_interviniente_service.saveAndReprocess(t)
             await publish_user_notification(str(self.session.user_id), "INFO", f"Guía aérea N°{t.numero}: Información adicional procesada correctamente!", str(t.guiaAereaId))
             
             await self.associate_guia(guia_aerea) 
             await publish_user_notification(str(self.session.user_id), "SUCCESS", f"Guía aérea N°{t.numero}: Proceso de actualización finalizado correctamente.", str(t.guiaAereaId))
-
             await self.notificacion_service.resolver(guia_aerea.guia_aerea_id)
-           
+            await self.irregularidad_service.detectar_irregularidades(guia_aerea)
         return guia_aerea
 
     async def associate_guia(self, t: GuiaAerea):
@@ -333,22 +361,31 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
             intervinientes_map,
             intervinientes_modificados
         )
-        await self._validar_duplicados(guia_aerea)
         await self._validar_numero_formato(guia_aerea)
+        await self._validar_duplicados(guia_aerea)
 
         # 3️⃣ Estado final coherente
         guia_aerea.modificado = DateUtil.get_current_local_datetime()
         guia_aerea.modificado_por = Constantes.SYSTEM_USER
 
-        if guia_aerea.confidence_total >= 0.95:
+        # Persistir observaciones del análisis contextual IA appendings a las internas
+        if doc.observaciones and doc.observaciones.strip().lower() != "sin irregularidades detectadas":
+            current_obs = guia_aerea.observaciones or ""
+            if doc.observaciones not in current_obs:
+                guia_aerea.observaciones = (current_obs + "\n" + doc.observaciones).strip()
+
+        # Si la IA detectó ilegalidad o inconsistencias → forzar REVISION_MANUAL
+        analisis = doc.analisisContextual or {}
+        es_ilegal = analisis.get("esIlegal", False)
+        tiene_inconsistencias = analisis.get("tieneInconsistencias", False)
+
+        if es_ilegal or tiene_inconsistencias:
+            guia_aerea.estado_confianza_codigo = Constantes.EstadoConfianza.REVISION_MANUAL
+        elif guia_aerea.confidence_total >= 0.95:
             guia_aerea.estado_confianza_codigo = Constantes.EstadoConfianza.AUTO_VALIDADO
         else:
             guia_aerea.estado_confianza_codigo = Constantes.EstadoConfianza.REVISION_MANUAL
 
-        if guia_aerea.estado_registro_codigo != Constantes.EstadoRegistroGuiaAereea.OBSERVADO:
-            guia_aerea.estado_registro_codigo = Constantes.EstadoRegistroGuiaAereea.PROCESADO
-
-        # 4️⃣ Persistencia
         await self.document_repository.save(guia_aerea)
 
         for interviniente in intervinientes_modificados:
@@ -471,14 +508,74 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
                  await publish_user_notification(str(self.session.user_id), "WARNING", f"Guía aérea N°{doc.numero}: Número de guía aérea sin formato válido", str(doc.guia_aerea_id), title="Validación Fallida", severity="WARNING")
 
     async def delete(self, guia_aerea_id: UUID):
-        guia_aerea = await self.get(str(guia_aerea_id))
-        if Constantes.HABILITADO == guia_aerea.habilitado:
-            guia_aerea.habilitado = Constantes.INHABILITADO
-        else:
-            guia_aerea.habilitado = Constantes.HABILITADO
+        guia_aerea    = await self.get(str(guia_aerea_id))
+        es_eliminacion = guia_aerea.habilitado == Constantes.HABILITADO
+        guia_aerea.habilitado = Constantes.INHABILITADO if es_eliminacion else Constantes.HABILITADO
         guia_aerea.modificado = DateUtil.get_current_local_datetime()
         guia_aerea.modificado_por = self.session.full_name
         await self.document_repository.save(guia_aerea)
+        await self._registrar_auditoria_habilitado(guia_aerea, es_eliminacion)
+        await self._resolver_notificaciones_si_observada(guia_aerea, es_eliminacion)
+        await self._sincronizar_manifiesto(guia_aerea, es_eliminacion)
+
+
+    async def _registrar_auditoria_habilitado(self, guia_aerea: GuiaAerea, es_eliminacion: bool):
+        accion = "ELIMINACIÓN"  if es_eliminacion else "RESTAURACIÓN"
+        val_anterior = "HABILITADO"   if es_eliminacion else "INHABILITADO"
+        val_nuevo = "INHABILITADO" if es_eliminacion else "HABILITADO"
+
+        await self.audit_service.registrar_modificacion(
+            entidad_tipo = Constantes.TipoEntidadAuditoria.GUIA_AEREA,
+            entidad_id = guia_aerea.guia_aerea_id,
+            numero_documento = guia_aerea.numero,
+            campo = "habilitado",
+            valor_anterior = val_anterior,
+            valor_nuevo = val_nuevo,
+            comentario = f"{accion} manual de la guía aérea",
+            accion_tipo_codigo = (
+                Constantes.TipoAccionAuditoria.ELIMINADO
+                if es_eliminacion else
+                Constantes.TipoAccionAuditoria.RESTORADO
+            ),
+        )
+
+    async def _resolver_notificaciones_si_observada(self, guia_aerea: GuiaAerea, es_eliminacion: bool):
+        esta_observada = guia_aerea.estado_registro_codigo == Constantes.EstadoRegistroGuiaAereea.OBSERVADO
+        if not (es_eliminacion and esta_observada):
+            return
+        try:
+            await self.notificacion_service.resolver(guia_aerea.guia_aerea_id)
+        except Exception as e:
+            logger.error(f"Error resolviendo notificaciones de guía {guia_aerea.guia_aerea_id}: {e}")
+
+    async def _sincronizar_manifiesto(self, guia_aerea: GuiaAerea, es_eliminacion: bool):
+        if not guia_aerea.manifiesto_id:
+            return
+        try:
+            manifiesto = await self.getManifiesto(guia_aerea.manifiesto_id)
+            self._recalcular_totales_manifiesto(manifiesto, guia_aerea, sumar=not es_eliminacion)
+            await self.manifiesto_repository.save(manifiesto)
+        except Exception as e:
+            logger.error(f"Error sincronizando manifiesto {guia_aerea.manifiesto_id}: {e}")
+
+    def _recalcular_totales_manifiesto(self, manifiesto, guia: GuiaAerea, sumar: bool):
+        factor = 1 if sumar else -1
+        qty = guia.cantidad_piezas or 0
+        peso = guia.peso_bruto or 0.0
+        vol = guia.volumen or 0.0
+
+        manifiesto.total_guias = max(0, (manifiesto.total_guias or 0) + factor)
+        manifiesto.total_bultos = max(0, (manifiesto.total_bultos or 0) + qty * factor)
+        manifiesto.peso_bruto_total = max(0.0, (manifiesto.peso_bruto_total or 0.0) + peso * factor)
+        manifiesto.volumen_total = max(0.0, (manifiesto.volumen_total or 0.0) + vol * factor)
+        manifiesto.modificado = DateUtil.get_current_local_datetime()
+        manifiesto.modificado_por = self.session.full_name
+
+        if manifiesto.total_guias == 0:
+            manifiesto.habilitado = Constantes.INHABILITADO
+        elif manifiesto.habilitado == Constantes.INHABILITADO and sumar:
+            manifiesto.habilitado = Constantes.HABILITADO
+
 
     async def deleteAll(self, request: DeleteAllGuiaAereaRequest):
         for id in request.guiaAereaIds:
@@ -490,3 +587,17 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         guia_aerea.modificado = DateUtil.get_current_local_datetime()
         guia_aerea.modificado_por = self.session.full_name if hasattr(self, 'session') and self.session else Constantes.SYSTEM_USER
         await self.document_repository.save(guia_aerea)
+
+    def _serialize_guia(self, guia: GuiaAerea) -> dict:
+        try:
+            data = {}
+            for column in guia.__table__.columns:
+                value = getattr(guia, column.name, None)
+                if isinstance(value, (UUID, datetime)):
+                    value = str(value)
+                elif isinstance(value, Decimal):
+                    value = float(value)
+                data[column.name] = value
+            return data
+        except Exception as e:
+            return {"error_serialization": str(e)}
