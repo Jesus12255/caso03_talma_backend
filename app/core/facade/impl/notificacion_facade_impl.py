@@ -13,7 +13,7 @@ class NotificacionFacadeImpl(NotificacionFacade, FacadeBase):
 
     async def visto(self, notificacion_id: UUID):
         await self.notificacion_service.visto(notificacion_id)
-        return BaseOperacionResponse(codigo=200, mensaje="Notificacion vista exitosamente")
+        return BaseOperacionResponse(codigo="200", mensaje="Notificacion vista exitosamente")
         
     async def load(self) -> list[NotificacionResponse]:
         notificaciones = await self.notificacion_service.get_user_notifications(str(self.session.user_id))

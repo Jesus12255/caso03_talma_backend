@@ -8,13 +8,13 @@ import logging
 class EmailServiceImpl(EmailService):
     
     def __init__(self):
-        self.smtp_host = settings.MAIL_HOST
-        self.smtp_port = settings.MAIL_PORT
-        self.smtp_user = settings.MAIL_USER
-        self.smtp_password = settings.MAIL_PASSWORD
+        self.smtp_host = settings.SMTP_HOST
+        self.smtp_port = settings.SMTP_PORT
+        self.smtp_user = settings.SMTP_USER
+        self.smtp_password = settings.SMTP_PASSWORD
         self.logger = logging.getLogger(__name__)
 
-    def send_credentials_email(self, to_email: str, username: str, password: str, nombre_completo: str) -> bool:
+    def send_credentials_email(self, to_email: str,  password: str, nombre_completo: str) -> bool:
         print(f"DEBUG: Preparing to send email to {to_email} via {self.smtp_host}:{self.smtp_port} user={self.smtp_user}") # Debug
         try:
             msg = MIMEMultipart("alternative")
@@ -50,7 +50,6 @@ class EmailServiceImpl(EmailService):
                         <p>A continuación, encontrará sus credenciales de acceso:</p>
                         
                         <div class="credentials">
-                            <p><span class="label">Usuario:</span> <span class="value">{username}</span></p>
                             <p><span class="label">Contraseña:</span> <span class="value">{password}</span></p>
                         </div>
                         

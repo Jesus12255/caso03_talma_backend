@@ -175,3 +175,24 @@ class DateUtil:
             return fecha.strftime("%d/%m/%Y %H:%M:%S")
         except Exception:
             return "Formato inválido"
+
+    @staticmethod
+    def get_time_ago(fecha: datetime) -> str:
+        if not fecha:
+            return ""
+        ahora = datetime.now()
+        diferencia = ahora - fecha
+        
+        segundos = int(diferencia.total_seconds())
+        if segundos < 60:
+            return "Hace un momento"
+        minutos = segundos // 60
+        if minutos < 60:
+            return f"Hace {minutos} min"
+        horas = minutos // 60
+        if horas < 24:
+            return f"Hace {horas} {'hora' if horas == 1 else 'horas'}"
+        dias = horas // 24
+        if dias < 30:
+            return f"Hace {dias} {'día' if dias == 1 else 'días'}"
+        return fecha.strftime("%d/%m/%Y")

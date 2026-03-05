@@ -22,15 +22,15 @@ class Settings(BaseSettings):
     GCP_PRIVATE_KEY: str
     
     
-    SECRET_KEY: str = secrets.token_hex(32)
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    SECRET_KEY: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int 
 
    
-    MAIL_HOST: str = "smtp.gmail.com"
-    MAIL_PORT: int = 587
-    MAIL_USER: str = "pruebastalmativit@gmail.com"
-    MAIL_PASSWORD: str = "rztrxmswypvqhxly"
+    SMTP_HOST: str
+    SMTP_PORT: int
+    SMTP_USER: str
+    SMTP_PASSWORD: str
 
     model_config = SettingsConfigDict(
         env_file=".env",
