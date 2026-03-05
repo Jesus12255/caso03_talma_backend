@@ -13,11 +13,11 @@ class AnalyzeFacadeImpl(AnalyzeFacade):
     def __init__(self, analyze_service):
         self.analyze_service = analyze_service
 
-    async def upload(self, files: List[UploadFile]) -> StreamingResponse:
+    async def upload(self, files: List[UploadFile], model: str) -> StreamingResponse:
         files_data = await self.analyze_service.read_and_validate(files)
 
         async def event_stream() -> AsyncGenerator[str, None]:
-            async for event in self.analyze_service.process_stream(files_data):
+            async for event in self.analyze_service.process_stream(files_data, model):
                 yield self._sse(event)
 
         return StreamingResponse(

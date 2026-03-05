@@ -87,9 +87,11 @@ class UsuarioRepositoryImpl(BaseRepositoryImpl[Usuario], UsuarioRepository):
             logger.error(f"Error finding users: {e}", exc_info=True)
             return [], 0
 
-    async def get_by_email(self, email: str) -> Usuario:
+    async def get_by_email(self, email: str, exclude_id: str = None) -> Usuario:
         try:
             query = select(Usuario).where(Usuario.correo == email, Usuario.habilitado == True)
+            if exclude_id:
+                query = query.filter(Usuario.usuario_id != exclude_id)
             result = await self.db.execute(query)
             return result.scalars().first()
         except Exception as e:

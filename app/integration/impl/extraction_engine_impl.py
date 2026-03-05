@@ -55,9 +55,10 @@ class ExtractionEngineImpl(ExtractionEngine):
                 
         return text
 
-    async def extract_single_document(self, base64_data: str, mime_type: str, page_count: int, start_index: int) -> list[dict]:
+    async def extract_single_document(self, base64_data: str, mime_type: str, page_count: int, start_index: int, model: str | None = None) -> list[dict]:
         today = _date.today().strftime("%Y-%m-%d")
         client = genai.Client(api_key=settings.LLM_API_KEY)
+        effective_model = model or settings.LLM_MODEL_NAME
         
         is_pdf = mime_type == "application/pdf"
         is_text = mime_type == "text/plain"
@@ -373,10 +374,10 @@ Formato requerido:
         
         for attempt in range(max_retries):
             try:
-                logger.info(f"AI Call attempt {attempt+1} for index {start_index} (Mime: {mime_type}, Model: {settings.LLM_MODEL_NAME})")
+                logger.info(f"AI Call attempt {attempt+1} for index {start_index} (Mime: {mime_type}, Model: {effective_model})")
                 
                 response = await client.aio.models.generate_content(
-                    model=settings.LLM_MODEL_NAME,
+                    model=effective_model,
                     contents=contents,
                     config=types.GenerateContentConfig(
                         response_mime_type="application/json"

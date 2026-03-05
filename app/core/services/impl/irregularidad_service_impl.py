@@ -18,6 +18,8 @@ from app.core.domain.notificacion import Notificacion
 from utl.constantes import Constantes
 from core.realtime.publisher import  publish_user_notification
 import logging
+import uuid as uuid_module
+import random
 
 logger = logging.getLogger(__name__)
 class IrregularidadServiceImpl(IrregularidadService):
@@ -401,7 +403,7 @@ class IrregularidadServiceImpl(IrregularidadService):
         irregularidades: list
     ):
         """Registra notificación generada por el análisis contextual de la IA."""
-        import uuid as uuid_module
+        
         notificacion = Notificacion(
             notificacion_id=uuid_module.uuid4(),
             guia_aerea_id=guia.guia_aerea_id,
@@ -591,7 +593,7 @@ class IrregularidadServiceImpl(IrregularidadService):
             )
 
         # Para dispersión (jitter) visual para que las empresas no se monten exacto sobre el aeropuerto
-        import random
+        
         
         for guia in guias:
             origen = guia.origen_codigo or "LIM"

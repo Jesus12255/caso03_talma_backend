@@ -11,6 +11,11 @@ from app.core.services.trama_service import TramaService
 from typing import List
 from app.core.domain.guia_aerea_data_grid import GuiaAereaDataGrid
 from utl.constantes import Constantes
+import fitz 
+from io import BytesIO
+import xml.etree.ElementTree as ET
+from xml.dom import minidom
+from datetime import datetime
 
 class TramaServiceImpl(TramaService, ServiceBase):
     
@@ -174,8 +179,7 @@ class TramaServiceImpl(TramaService, ServiceBase):
 
      async def generate_manifest_pdf(self, guias: List[GuiaAereaDataGrid]) -> bytes:
           try:
-               import fitz  # PyMuPDF
-               from io import BytesIO
+               
                doc = fitz.open()
                page = doc.new_page(width=595, height=842) # A4
                
@@ -354,9 +358,7 @@ class TramaServiceImpl(TramaService, ServiceBase):
           """
           Generates XML content based on SUNAT OMA v3.7 standard.
           """
-          import xml.etree.ElementTree as ET
-          from xml.dom import minidom
-          from datetime import datetime
+          
 
           if not guias:
                return ""

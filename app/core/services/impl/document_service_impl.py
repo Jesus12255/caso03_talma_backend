@@ -12,7 +12,7 @@ from typing import List
 from uuid import UUID
 from datetime import datetime
 from decimal import Decimal
-
+import json
 from app.core.domain.confianza_extraccion import ConfianzaExtraccion
 from app.core.domain.guia_aerea import  GuiaAerea
 from app.core.domain.guia_aerea_data_grid import GuiaAereaDataGrid
@@ -297,7 +297,7 @@ class DocumentServiceImpl(DocumentService, ServiceBase):
         await self.setManifiesto(manifiesto.manifiesto_id, t.guia_aerea_id)
 
     def _validate_and_update_status(self, m: Manifiesto):
-        import json
+        
         errors = []
         if (m.peso_bruto_total or 0) <= 0:
             errors.append("Peso total es 0.")
