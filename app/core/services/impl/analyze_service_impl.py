@@ -40,7 +40,7 @@ class AnalyzeServiceImpl(AnalyzeService, FacadeBase):
 
 
 
-    async def process_stream(self, files_data: List[FileData]) -> AsyncGenerator[dict, None]:
+    async def process_stream(self, files_data: List[FileData], model: str) -> AsyncGenerator[dict, None]:
 
         if not files_data:
             yield self._error("No se encontraron documentos válidos")
@@ -53,7 +53,7 @@ class AnalyzeServiceImpl(AnalyzeService, FacadeBase):
             filename, content = file.values()
 
             yield self._thinking(f"Vectorizando contenido de {filename}...")
-            task_info = await self._build_task(content, filename, page_index)
+            task_info = await self._build_task(content, filename, page_index, model)
 
             if not task_info:
                 yield self._warning(f"No se pudo leer el archivo {filename}")
@@ -111,12 +111,12 @@ class AnalyzeServiceImpl(AnalyzeService, FacadeBase):
             return None
 
 
-    async def _build_task(self, content: bytes, filename: str, start_index: int) -> Optional[Tuple[asyncio.Task, int]]:
+    async def _build_task(self, content: bytes, filename: str, start_index: int, model: str) -> Optional[Tuple[asyncio.Task, int]]:
         if FileUtil.is_valid_docx(content) or FileUtil.is_valid_xlsx(content):
-            return await self._build_text_task(content, filename, start_index)
-        return self._build_binary_task(content, filename, start_index)
+            return await self._build_text_task(content, filename, start_index, model)
+        return self._build_binary_task(content, filename, start_index, model)
 
-    async def _build_text_task(self, content: bytes, filename: str, start_index: int) -> Optional[Tuple[asyncio.Task, int]]:
+    async def _build_text_task(self, content: bytes, filename: str, start_index: int, model: str) -> Optional[Tuple[asyncio.Task, int]]:
         loop = asyncio.get_running_loop()
         _, text = await loop.run_in_executor(
             None,
@@ -133,12 +133,13 @@ class AnalyzeServiceImpl(AnalyzeService, FacadeBase):
                 base64.b64encode(text.encode()).decode(),
                 "text/plain",
                 1,
-                start_index
+                start_index,
+                model
             ),
             1
         )
 
-    def _build_binary_task( self, content: bytes, filename: str, start_index: int) -> Optional[Tuple[asyncio.Task, int]]:
+    def _build_binary_task(self, content: bytes, filename: str, start_index: int, model: str) -> Optional[Tuple[asyncio.Task, int]]:
         images, _ = FileParser.parse(content, filename)
         if not images:
             return None
@@ -147,7 +148,8 @@ class AnalyzeServiceImpl(AnalyzeService, FacadeBase):
                 images[0],
                 "image/jpeg",
                 len(images),
-                start_index
+                start_index,
+                model
             ),
             len(images)
         )

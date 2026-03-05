@@ -41,7 +41,11 @@ class UsuarioServiceImpl(UsuarioService, ServiceBase):
             usuario.apellido_materno = t.apellidoMaterno
             usuario.tipo_documento_codigo = t.tipoDocumentoCodigo
             usuario.documento = t.documento
-            usuario.correo = t.correo
+            
+            if usuario.correo != t.correo:
+                await self.validate_email(t.correo, str(usuario.usuario_id))
+                usuario.correo = t.correo
+
             usuario.celular = t.celular
             usuario.modificado = DateUtil.get_current_local_datetime()
             usuario.modificado_por = self.session.full_name
@@ -65,17 +69,16 @@ class UsuarioServiceImpl(UsuarioService, ServiceBase):
                     asyncio.to_thread(
                         self.email_service.send_credentials_email, 
                         usuario.correo, 
-                        usuario.usuario, 
                         raw_password, 
                         nombre_completo
                     )
                 )
 
 
-    async def validate_email(self, email: str) -> bool:
-        usuario = await self.usuario_repository.get_by_email(email)
+    async def validate_email(self, email: str, exclude_id: str = None) -> bool:
+        usuario = await self.usuario_repository.get_by_email(email, exclude_id)
         if usuario: 
-            raise AppBaseException(message=f"El correo ya se encuentra registrado, le pertenece al usuario {usuario.usuario}", status_code=status.HTTP_400_BAD_REQUEST)
+            raise AppBaseException(message=f"El correo {email} ya se encuentra registrado, le pertenece al usuario {usuario.usuario}", status_code=status.HTTP_400_BAD_REQUEST)
       
             
     async def changeStatus(self, t: UsuarioStatusRequest) -> None:
@@ -122,7 +125,7 @@ class UsuarioServiceImpl(UsuarioService, ServiceBase):
         usuario.modificado = DateUtil.get_current_local_datetime()
         usuario.modificado_por = self.session.full_name
         await self.usuario_repository.save(usuario)
-        return BaseOperacionResponse(codigo=status.HTTP_200_OK, mensaje="Contraseña actualizada correctamente")
+        return BaseOperacionResponse(codigo="200", mensaje="Contraseña actualizada correctamente")
 
     async def load_menu(self) -> MenuResponse:
         menus = await self.menu_repository.find_by_rol_id(self.session.role_id)

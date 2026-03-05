@@ -6,7 +6,7 @@ from app.security.facade.impl.usuario_facade_impl import UsuarioFacadeImpl
 from app.security.repository.impl.usuario_repository_impl import UsuarioRepositoryImpl
 from app.security.service.impl.usuario_service_impl import UsuarioServiceImpl
 from config.database_config import get_db
-from config.dependiencies.dependencies_config import get_model_mapper
+from config.dependencies.dependencies_config import get_model_mapper
 
 from app.core.services.impl.email_service_impl import EmailServiceImpl
 

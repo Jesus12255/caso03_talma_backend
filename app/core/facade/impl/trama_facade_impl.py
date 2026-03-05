@@ -54,7 +54,7 @@ class TramaFacadeImpl(TramaFacade, FacadeBase):
         for id in t.guiaIds:
             guias.append(await self.document_service.get(id))
         await self.trama_service.validate_batch(guias)
-        return BaseOperacionResponse(codigo=200, mensaje="Trama validada exitosamente")
+        return BaseOperacionResponse(codigo="200", mensaje="Trama validada exitosamente")
 
     async def get_records_by_manifiesto_ids(self, ids: list[str]) -> list:
         return await self.trama_service.get_records_by_manifiesto_ids(ids)
