@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     BACKEND_CORS_ORIGINS: List[str] = ["*"]
     LOG_LEVEL: str = "INFO"
+    ENVIRONMENT: str = "development"
 
     LLM_API_KEY: str 
     LLM_MODEL_NAME: str 
@@ -25,8 +26,9 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int 
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = 1440
+    RECAPTCHA_SECRET_KEY: str | None = None
 
-   
     SMTP_HOST: str
     SMTP_PORT: int
     SMTP_USER: str
