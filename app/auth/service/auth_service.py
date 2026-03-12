@@ -5,7 +5,7 @@ from app.auth.schema.user import UserLogin, Token
 
 class AuthService(ABC):
     @abstractmethod
-    async def login(self, db: AsyncSession, user_in: UserLogin) -> Token:
+    async def login(self, db: AsyncSession, user_in: UserLogin, ip: str = "unknown") -> Token:
         pass
 
     @abstractmethod
