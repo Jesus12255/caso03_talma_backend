@@ -6,10 +6,14 @@ from config.cors_config import setup_cors
 from config.router_config import setup_routes
 from config.database_config import engine
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.middleware.security_headers import SecurityHeadersMiddleware
 
 setup_logging()
 setup_cors(app)
 setup_routes(app)
+
+# Add Security Headers Middleware
+app.add_middleware(SecurityHeadersMiddleware)
 
 async def init_models():
     async with engine.begin() as conn:

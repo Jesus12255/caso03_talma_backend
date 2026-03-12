@@ -11,6 +11,7 @@ class UserCreate(UserBase):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+    recaptcha_token: str | None = None
 
 class User(UserBase):
     id: int | str
@@ -22,8 +23,16 @@ class User(UserBase):
 
 class Token(BaseModel):
     access_token: str
+    refresh_token: str | None = None
     token_type: str
+    expires_in: int | None = None
     require_password_change: bool = False
+
+class TokenRefresh(BaseModel):
+    refresh_token: str
+
+class LogoutRequest(BaseModel):
+    refresh_token: str | None = None
 
 class UserForgotPassword(BaseModel):
     email: EmailStr
