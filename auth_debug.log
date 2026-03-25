@@ -171,3 +171,258 @@
 [2026-03-12T19:54:48.720078] Expiring Access JTI in 816 seconds
 [2026-03-12T19:54:49.168333] Refresh Token JTI: aeac872f-a8e1-4103-86de-2a1e917ef396, EXP: 1773431605, NOW_TS: 1773345288.720078
 [2026-03-12T19:54:49.168333] Expiring Refresh JTI in 86316 seconds
+[2026-03-25T17:22:02.657328+00:00] [DEP] Checking JTI 277cd321-2f52-431c-a028-d9d21af06c42: Blocklisted=False
+[2026-03-25T17:22:03.045854+00:00] [DEP] Checking JTI 277cd321-2f52-431c-a028-d9d21af06c42: Blocklisted=False
+[2026-03-25T17:22:03.108585+00:00] [DEP] Checking JTI 277cd321-2f52-431c-a028-d9d21af06c42: Blocklisted=False
+[2026-03-25T17:22:03.402169+00:00] [DEP] Checking JTI 277cd321-2f52-431c-a028-d9d21af06c42: Blocklisted=False
+[2026-03-25T17:22:03.414695+00:00] [DEP] Checking JTI 277cd321-2f52-431c-a028-d9d21af06c42: Blocklisted=False
+[2026-03-25T17:22:04.949588+00:00] [DEP] Checking JTI 277cd321-2f52-431c-a028-d9d21af06c42: Blocklisted=False
+[2026-03-25T17:22:04.952960+00:00] [DEP] Checking JTI 277cd321-2f52-431c-a028-d9d21af06c42: Blocklisted=False
+[2026-03-25T17:22:05.805793+00:00] [DEP] Checking JTI 277cd321-2f52-431c-a028-d9d21af06c42: Blocklisted=False
+[2026-03-25T17:22:07.798287] LOGOUT CALLED. Access token present: True
+[2026-03-25T17:22:07.799293] Access Token JTI: 277cd321-2f52-431c-a028-d9d21af06c42, EXP: 1774460221, NOW_TS: 1774459327.799293
+[2026-03-25T17:22:07.799293] Expiring Access JTI in 893 seconds
+[2026-03-25T17:22:08.150419] Refresh Token JTI: fc74cb90-082c-4f37-97e2-284d0a8bfd91, EXP: 1774545722, NOW_TS: 1774459327.799293
+[2026-03-25T17:22:08.151546] Expiring Refresh JTI in 86394 seconds
+[2026-03-25T17:22:17.225502+00:00] [DEP] Checking JTI 83d240b4-7540-44e2-a958-e01c7b2cf3de: Blocklisted=False
+[2026-03-25T17:22:17.599840+00:00] [DEP] Checking JTI 83d240b4-7540-44e2-a958-e01c7b2cf3de: Blocklisted=False
+[2026-03-25T17:22:17.940651+00:00] [DEP] Checking JTI 83d240b4-7540-44e2-a958-e01c7b2cf3de: Blocklisted=False
+[2026-03-25T17:22:17.944818+00:00] [DEP] Checking JTI 83d240b4-7540-44e2-a958-e01c7b2cf3de: Blocklisted=False
+[2026-03-25T17:22:17.954502+00:00] [DEP] Checking JTI 83d240b4-7540-44e2-a958-e01c7b2cf3de: Blocklisted=False
+[2026-03-25T17:22:19.457596+00:00] [DEP] Checking JTI 83d240b4-7540-44e2-a958-e01c7b2cf3de: Blocklisted=False
+[2026-03-25T17:22:19.458596+00:00] [DEP] Checking JTI 83d240b4-7540-44e2-a958-e01c7b2cf3de: Blocklisted=False
+[2026-03-25T17:22:20.672928+00:00] [DEP] Checking JTI 83d240b4-7540-44e2-a958-e01c7b2cf3de: Blocklisted=False
+[2026-03-25T17:22:22.137593] LOGOUT CALLED. Access token present: True
+[2026-03-25T17:22:22.138596] Access Token JTI: 83d240b4-7540-44e2-a958-e01c7b2cf3de, EXP: 1774460236, NOW_TS: 1774459342.137593
+[2026-03-25T17:22:22.138596] Expiring Access JTI in 893 seconds
+[2026-03-25T17:22:22.492591] Refresh Token JTI: 4e8cec70-2e16-43cb-b7a3-4894154e140a, EXP: 1774545736, NOW_TS: 1774459342.137593
+[2026-03-25T17:22:22.493100] Expiring Refresh JTI in 86393 seconds
+[2026-03-25T17:22:59.708847+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:23:00.077695+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:23:00.145680+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:23:00.443019+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:23:00.502945+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:23:02.022965+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:23:02.075567+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:23:02.963249+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:23:15.578223+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:23:39.958862+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:24:08.355558+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:24:12.265635+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:24:18.849479+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:24:47.179580+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:24:50.577287+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:24:57.294029+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:26:30.111512+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:30:09.246859+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:30:13.876030+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:30:13.880553+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:30:15.077352+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:30:16.444519+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:30:29.489479+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:30:59.493911+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:31:04.931329+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:31:15.131539+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:31:20.112673+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:31:25.880771+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:32:17.228206+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:32:30.743889+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:34:45.922804+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:36:17.273072+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:36:17.413997+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:36:18.917239+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=False
+[2026-03-25T17:36:19.711080] LOGOUT CALLED. Access token present: True
+[2026-03-25T17:36:19.711080] Access Token JTI: b05a2a81-6101-4b2f-8fd3-f4aafb549df6, EXP: 1774460279, NOW_TS: 1774460179.71108
+[2026-03-25T17:36:19.711080] Expiring Access JTI in 99 seconds
+[2026-03-25T17:36:20.062627] Refresh Token JTI: 9f8957f5-fb89-4f62-9847-f10294308657, EXP: 1774545779, NOW_TS: 1774460179.71108
+[2026-03-25T17:36:20.062627] Expiring Refresh JTI in 85599 seconds
+[2026-03-25T17:36:20.299646+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=True
+[2026-03-25T17:36:20.299646+00:00] [DEP] REJECTING REVOKED TOKEN: b05a2a81-6101-4b2f-8fd3-f4aafb549df6
+[2026-03-25T17:36:20.645098+00:00] [DEP] Checking JTI b05a2a81-6101-4b2f-8fd3-f4aafb549df6: Blocklisted=True
+[2026-03-25T17:36:20.645098+00:00] [DEP] REJECTING REVOKED TOKEN: b05a2a81-6101-4b2f-8fd3-f4aafb549df6
+[2026-03-25T17:36:45.079924+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:36:45.455262+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:36:45.469634+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:36:45.769513+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:36:45.786599+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:36:46.935221+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:36:47.159361+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:36:47.208800+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:36:48.263663+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:37:23.950872+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:37:55.292229+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:38:11.834733+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:38:14.984660+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:38:25.289579+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:38:30.601824+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:38:34.051090+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:38:37.685445+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:38:41.206175+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:38:44.744074+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:38:48.485024+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:38:52.429607+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:39:03.169570+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:39:43.802481+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:39:47.901341+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:39:51.535605+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:40:00.372640+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:40:02.260685+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:40:04.273250+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:40:08.916468+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:40:10.559440+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:41:09.333874+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:41:09.334875+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:41:10.824711+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:41:11.070425+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:41:12.263002+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:41:13.808628+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:41:18.889534+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:41:27.475676+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:41:29.178149+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:42:44.849493+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:42:59.428186+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:43:00.223196+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:43:00.961743+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=False
+[2026-03-25T17:43:01.788628] LOGOUT CALLED. Access token present: True
+[2026-03-25T17:43:01.789627] Access Token JTI: a2330528-9ef3-4a31-adab-f4fb9cc7eba6, EXP: 1774461104, NOW_TS: 1774460581.788628
+[2026-03-25T17:43:01.789627] Expiring Access JTI in 522 seconds
+[2026-03-25T17:43:02.140889] Refresh Token JTI: 0dbd310b-106c-41a2-b966-e84a2c40b5bc, EXP: 1774546604, NOW_TS: 1774460581.788628
+[2026-03-25T17:43:02.140889] Expiring Refresh JTI in 86022 seconds
+[2026-03-25T17:43:02.646853+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=True
+[2026-03-25T17:43:02.646853+00:00] [DEP] REJECTING REVOKED TOKEN: a2330528-9ef3-4a31-adab-f4fb9cc7eba6
+[2026-03-25T17:43:03.000296+00:00] [DEP] Checking JTI a2330528-9ef3-4a31-adab-f4fb9cc7eba6: Blocklisted=True
+[2026-03-25T17:43:03.001297+00:00] [DEP] REJECTING REVOKED TOKEN: a2330528-9ef3-4a31-adab-f4fb9cc7eba6
+[2026-03-25T17:43:15.566577+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:43:15.936614+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:43:16.310965+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:43:16.312972+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:43:16.325739+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:43:17.386695+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:43:17.786317+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:43:17.966338+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:43:19.016910+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:46:52.106768+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:47:06.649707+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:47:36.203071+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:47:39.962190+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:47:45.098237+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:47:50.784770+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:47:55.810183+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:48:02.957746+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:48:12.440769+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:48:20.023964+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:48:24.551552+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:48:45.824891+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:48:52.109251+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:48:56.841076+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:49:07.145689+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:49:07.166825+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:49:07.887965+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:49:08.696870+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:49:09.365228+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:49:09.378350+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:49:10.755105+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:51:18.632186+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:51:18.633769+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:51:20.196796+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:51:20.227150+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:51:20.229881+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:51:20.241114+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:51:21.633254+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:51:21.748665+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:51:23.033734+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:51:23.142155+00:00] [DEP] Checking JTI 4488daa1-d8cb-4c15-a0cd-f780c423e3d6: Blocklisted=False
+[2026-03-25T17:51:24.503569] LOGOUT CALLED. Access token present: True
+[2026-03-25T17:51:24.504081] Access Token JTI: 4488daa1-d8cb-4c15-a0cd-f780c423e3d6, EXP: 1774461495, NOW_TS: 1774461084.503569
+[2026-03-25T17:51:24.504081] Expiring Access JTI in 410 seconds
+[2026-03-25T17:51:24.953532] Refresh Token JTI: 8901864b-2e3f-4f96-92e8-aac2a0bd232a, EXP: 1774546995, NOW_TS: 1774461084.503569
+[2026-03-25T17:51:24.954533] Expiring Refresh JTI in 85910 seconds
+[2026-03-25T17:51:40.089960+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:51:40.450072+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:51:40.489032+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:51:40.780780+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:51:40.812248+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:51:41.942922+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:51:42.182264+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:51:42.215260+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:51:43.134165+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:51:59.720866+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:52:33.287085+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:52:47.551221+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:53:02.413530+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:53:37.743964+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:54:29.330982+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:55:01.339893+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:56:02.255673+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:57:23.499439+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:57:23.648747+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:57:24.968349+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:57:29.660606+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:57:33.637985+00:00] [DEP] Checking JTI a2887c66-b5b4-42be-bcc1-2c03f472ec1e: Blocklisted=False
+[2026-03-25T17:59:37.501197] LOGOUT CALLED. Access token present: True
+[2026-03-25T17:59:37.501197] Access Token JTI: a2887c66-b5b4-42be-bcc1-2c03f472ec1e, EXP: 1774461999, NOW_TS: 1774461577.501197
+[2026-03-25T17:59:37.501197] Expiring Access JTI in 421 seconds
+[2026-03-25T17:59:37.949731] Refresh Token JTI: 69b441a7-4219-432c-b810-f5ccd1661ae7, EXP: 1774547499, NOW_TS: 1774461577.501197
+[2026-03-25T17:59:37.949731] Expiring Refresh JTI in 85921 seconds
+[2026-03-25T18:00:11.108539+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:00:11.476320+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:00:11.812966+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:00:11.814965+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:00:11.835734+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:00:12.967426+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:00:13.210036+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:00:13.263757+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:00:14.427675+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:00:25.890613+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:00:53.112674+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:01:10.256476+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:01:27.670898+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:01:27.678924+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:01:27.680428+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:01:29.299747+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:01:39.982483+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:02:04.344669+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:02:08.952795+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:02:10.335676+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:02:10.338159+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:02:11.855207+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:02:16.265637+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:02:16.270119+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:02:16.409622+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:02:16.794092+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:02:17.127994+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:02:17.977189+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:02:18.265042+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:02:30.113101+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:02:38.797301+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:02:48.229861+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:01.553600+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:03.131481+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:04.397253+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:08.449445+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:19.908709+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:29.343518+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:33.070105+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:34.645833+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:34.869628+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:36.054028+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:40.181904+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:44.400928+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:44.421978+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:48.904121+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:48.904121+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:50.902669+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:50.970951+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:52.653653+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:54.228356+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:54.229982+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:55.607807+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:03:59.051698+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:04:02.105712+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:04:02.125921+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:04:20.919600+00:00] [DEP] Checking JTI 184d3e62-391a-44a1-b9e7-404d49d0c93c: Blocklisted=False
+[2026-03-25T18:05:30.703498] LOGOUT CALLED. Access token present: True
+[2026-03-25T18:05:30.704499] Access Token JTI: 184d3e62-391a-44a1-b9e7-404d49d0c93c, EXP: 1774462510, NOW_TS: 1774461930.703498
+[2026-03-25T18:05:30.704499] Expiring Access JTI in 579 seconds
+[2026-03-25T18:05:31.164542] Refresh Token JTI: 06300f2b-0883-4c68-ae4a-a586882693a6, EXP: 1774548010, NOW_TS: 1774461930.703498
+[2026-03-25T18:05:31.164542] Expiring Refresh JTI in 86079 seconds
