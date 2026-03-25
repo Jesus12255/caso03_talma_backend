@@ -59,10 +59,12 @@ async def redis_connector():
                             data = message["data"].decode("utf-8")
                             
                             # Extraer ID del canal
-                            # channel.split(":") -> ["user", "uuid-bla-bla", "notifications"]
-                            parts = channel.split(":")
-                            if len(parts) == 3:
-                                target_user_id = parts[1]
+                            # channel format: "user:{uuid}:notifications"
+                            # UUIDs contienen guiones (-) pero NO dos puntos (:),
+                            # por lo que split(":") debe dar exactamente 3 partes.
+                            # Usamos rsplit para mayor seguridad frente a variaciones.
+                            if channel.startswith("user:") and channel.endswith(":notifications"):
+                                target_user_id = channel[len("user:"):-len(":notifications")]
                                 await manager.send_personal_message(data, target_user_id)
             except asyncio.CancelledError:
                 logger.info("Redis connector task cancelled (inner).")
