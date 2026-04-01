@@ -1,0 +1,16 @@
+.git
+.gitignore
+.env
+*.log
+venv/
+env/
+__pycache__/
+*.pyc
+Dockerfile
+cloudbuild.yaml
+test_*.py
+diagnose_*.py
+check_ts.py
+auth_debug.log
+.vscode/
+.idea/
