@@ -42,6 +42,17 @@ async def get_current_user(
                 detail="Token has been revoked",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+
+        # Scope enforcement: tokens emitidos con contraseña inicial solo pueden
+        # acceder al endpoint de cambio de contraseña.
+        token_scope = payload.get("scope", "full_access")
+        if token_scope == "password_change_only":
+            allowed_paths = {"/api/v1/auth/me", "/api/v1/security/usuarios/change-password"}
+            if request.url.path not in allowed_paths:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Debes cambiar tu contraseña antes de continuar.",
+                )
         
         # Obtener IP del cliente
         client_ip = request.client.host if request.client else None

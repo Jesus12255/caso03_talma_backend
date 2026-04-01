@@ -43,7 +43,8 @@ async def redis_connector():
             try:
                 connection_kwargs = {"socket_connect_timeout": 2}
                 if settings.REDIS_URL.startswith("rediss://"):
-                     connection_kwargs["ssl_cert_reqs"] = "none"
+                    import ssl
+                    connection_kwargs["ssl_cert_reqs"] = ssl.CERT_REQUIRED
 
                 redis_conn = redis.from_url(settings.REDIS_URL, **connection_kwargs)
                 async with redis_conn.pubsub() as pubsub:

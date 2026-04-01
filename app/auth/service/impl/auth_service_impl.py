@@ -4,7 +4,7 @@ from typing import Dict, Optional
 from jose import jwt, JWTError
 from fastapi import status
 from sqlalchemy.ext.asyncio import AsyncSession
-import random
+import secrets
 import uuid
 import httpx
 
@@ -130,16 +130,15 @@ class AuthServiceImpl(AuthService):
             "rolCodigo": user_orm.rol.codigo if user_orm.rol else None,
             "rol": user_orm.rol.nombre if user_orm.rol else None
         }
+        # Check if using default password — issue a restricted-scope token
+        require_change = user_in.password == settings.PASWORD_INICIAL
+        if require_change:
+            token_data["scope"] = "password_change_only"
+            
         access_token = self.create_access_token(data=token_data, expires_delta=access_token_expires)
-        
         refresh_token_expires = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
         refresh_token = self.create_refresh_token(data={"sub": user_orm.correo}, expires_delta=refresh_token_expires)
-        
-        # Check if using default password
-        require_change = False
-        if user_in.password == settings.PASWORD_INICIAL:
-            require_change = True
-            
+
         return Token(
             access_token=access_token,
             refresh_token=refresh_token,
@@ -159,12 +158,10 @@ class AuthServiceImpl(AuthService):
             # We don't do anything, but we return the same message as if we did
             return success_msg
 
-        code = str(random.randint(100000, 999999))
+        code = str(secrets.randbelow(900000) + 100000)
         now = datetime.now(timezone.utc)
         expiry = now + timedelta(minutes=5)
         fake_verification_codes[email] = {"code": code, "expiry": expiry}
-        
-        print(f"DEBUG: Verification code for {email} is {code} (expires at {expiry} UTC)") 
 
         # Send email
         nombre_completo = user.full_name or "Usuario"

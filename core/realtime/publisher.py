@@ -15,7 +15,8 @@ async def publish_document_update(type: str, message: str, doc_id: str = None):
         }
         
         if settings.REDIS_URL.startswith("rediss://"):
-            connection_kwargs["ssl_cert_reqs"] = "none"
+            import ssl
+            connection_kwargs["ssl_cert_reqs"] = ssl.CERT_REQUIRED
 
         r = redis.from_url(settings.REDIS_URL, **connection_kwargs)
         
@@ -42,7 +43,8 @@ async def publish_user_notification(user_id: str, type: str, message: str = "", 
         }
         
         if settings.REDIS_URL.startswith("rediss://"):
-            connection_kwargs["ssl_cert_reqs"] = "none"
+            import ssl
+            connection_kwargs["ssl_cert_reqs"] = ssl.CERT_REQUIRED
 
         r = redis.from_url(settings.REDIS_URL, **connection_kwargs)
         

@@ -1,11 +1,22 @@
 import secrets
 from typing import List
+from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "FastAPI Enterprise Backend"
     API_V1_STR: str = "/api/v1"
-    BACKEND_CORS_ORIGINS: List[str] = ["*"]
+    BACKEND_CORS_ORIGINS: List[str] = []
+
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @classmethod
+    def assemble_cors_origins(cls, v: str | List[str]) -> str | List[str]:
+        if isinstance(v, str) and not v.startswith("["):
+            return [i.strip() for i in v.split(",")]
+        elif isinstance(v, (list, str)):
+            return v
+        raise ValueError(v)
+
     LOG_LEVEL: str = "INFO"
     ENVIRONMENT: str = "development"
 

@@ -17,7 +17,8 @@ class LoginProtectionService:
             "decode_responses": True
         }
         if settings.REDIS_URL.startswith("rediss://"):
-            connection_kwargs["ssl_cert_reqs"] = "none"
+            import ssl
+            connection_kwargs["ssl_cert_reqs"] = ssl.CERT_REQUIRED
         return redis.from_url(settings.REDIS_URL, **connection_kwargs)
 
     @staticmethod
